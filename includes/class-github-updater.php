@@ -10,17 +10,17 @@
 
 namespace Harudigi_Amelia_MCP_Abilities;
 
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
-
 final class GitHub_Updater {
 
 	const REPO  = 'smvueno/harudigi-amelia-mcp-abilities';
 	const HOST  = 'github.com';
 	const CACHE = 'harudigi_amelia_mcp_gh_release';
 	const TTL   = HOUR_IN_SECONDS * 6;
-	const SLUG  = 'harudigi-amelia-mcp-abilities';
+	const SLUG  = 'mcp-abilities-for-amelia';
 
 	public static function init(): void {
 		$update_uri = (string) ( get_file_data( HARUDIGI_AMELIA_MCP_FILE, array( 'UpdateURI' => 'Update URI' ), 'plugin' )['UpdateURI'] ?? '' );
@@ -173,7 +173,7 @@ final class GitHub_Updater {
 
 		return new \WP_Error(
 			'harudigi_rename_failed',
-			__( 'Could not rename the GitHub plugin folder for install.', 'harudigi-amelia-mcp-abilities' )
+			__( 'Could not rename the GitHub plugin folder for install.', 'mcp-abilities-for-amelia' )
 		);
 	}
 
@@ -226,7 +226,7 @@ final class GitHub_Updater {
 			}
 			$name = (string) ( $asset['name'] ?? '' );
 			$url  = (string) ( $asset['browser_download_url'] ?? '' );
-			if ( $url && preg_match( '/harudigi-amelia-mcp-abilities.*\.zip$/i', $name ) ) {
+			if ( $url && preg_match( '/mcp-abilities-for-amelia.*\.zip$/i', $name ) ) {
 				return $url;
 			}
 		}

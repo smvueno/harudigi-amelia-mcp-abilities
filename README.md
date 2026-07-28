@@ -1,79 +1,49 @@
-# Amelia MCP Abilities - HaruDigi
+# MCP Abilities for Amelia – HaruDigi
 
-![Amelia MCP Abilities - HaruDigi](docs/banner.png)
+![MCP Abilities for Amelia – HaruDigi](docs/banner.png)
 
 **Give Easy MCP AI full, safe Amelia Booking abilities on WordPress.**  
 Built by [HaruDigi](https://harudigi.com) — websites, reach, automations, and trust for SMBs.
+
+> **Independent plugin.** MCP Abilities for Amelia is built by HaruDigi and is **not affiliated with or endorsed by TMS Software** (Amelia Booking).
 
 [![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](LICENSE)
 [![WordPress](https://img.shields.io/badge/WordPress-6.9%2B-blue.svg)](https://wordpress.org/)
 [![GitHub release](https://img.shields.io/github/v/release/smvueno/harudigi-amelia-mcp-abilities)](https://github.com/smvueno/harudigi-amelia-mcp-abilities/releases)
 
 **Docs:** [smvueno.github.io/harudigi-amelia-mcp-abilities](https://smvueno.github.io/harudigi-amelia-mcp-abilities/)  
-**Author:** Jens Madsen · **Brand:** HaruDigi · **Site:** [harudigi.com](https://harudigi.com)
+**Author:** Jens Madsen · **Brand:** HaruDigi · **Site:** [harudigi.com](https://harudigi.com)  
+**Install slug:** `mcp-abilities-for-amelia`
 
 ---
-
-## Why HaruDigi ships this
-
-HaruDigi helps small and mid-sized businesses get a **proper website**, **stronger reach to clients**, **practical automations**, and **trust** — with people and with AI engines.
-
-- **Haru** — Japanese for a new beginning and spring  
-- **Digi** — digital  
-
-This plugin is part of that mission: make WordPress booking ops **AI-ready** without exposing secrets or unsafe deletes.
-
-## What it does
-
-Amelia Pro already registers a core set of MCP abilities. This plugin **fills the gaps** for catalog, bookings, payments, and settings — and exposes them through **Easy MCP AI**:
-
-- Extra reads/writes for services, categories, locations, employees, packages, extras, resources, coupons, custom fields
-- Appointment/event/customer ops beyond the native set
-- Payment bookkeeping + remaining-balance payment links
-- Hardening: redacted secrets, blocked password/externalId writes, `confirm=true` for destructive deletes
-
-Ability slugs stay under `amelia/*` so existing MCP clients keep working.
 
 ## Requirements
 
 | Requirement | Notes |
 |-------------|--------|
-| WordPress 6.9+ | Abilities API era |
+| WordPress 6.9+ | |
 | PHP 7.4+ | |
-| Easy MCP AI | **Required** (`Requires Plugins: easy-mcp-ai`) |
-| Amelia Booking | Recommended — powers the abilities at runtime |
+| Easy MCP AI | **Required** |
+| Amelia Booking **9.7+** | Required for abilities to run |
 
 ## Install
 
-1. Install & activate **Easy MCP AI**.
-2. Download the latest **`harudigi-amelia-mcp-abilities-*.zip`** from [Releases](https://github.com/smvueno/harudigi-amelia-mcp-abilities/releases).
-3. In WordPress: **Plugins → Add New → Upload Plugin**.
-4. Activate **Amelia MCP Abilities - HaruDigi**.
-5. Activate Amelia Booking so the abilities can run.
-6. Optional: **Enable auto-updates** on the plugin row (checks public GitHub Releases).
+1. Activate **Easy MCP AI** and **Amelia Booking 9.7+**.
+2. Download a release ZIP:
+   - **GitHub updates:** `mcp-abilities-for-amelia-x.y.z.zip`
+   - **WordPress.org submission:** `mcp-abilities-for-amelia-x.y.z-wporg.zip` (no GitHub updater)
+3. Upload / activate **MCP Abilities for Amelia – HaruDigi**.
 
-### Migrating from `amelia-mcp-abilities`
+### Migrating from older folders
 
-Deactivate and delete the old folder, then install this plugin. Ability slugs are unchanged; only the plugin folder/slug and branding changed.
+If you still have `amelia-mcp-abilities` or `harudigi-amelia-mcp-abilities`, deactivate and delete that folder, then install `mcp-abilities-for-amelia`. Ability slugs (`amelia/*`) are unchanged.
 
-## Auto-updates from GitHub
+## Updates
 
-WordPress does not pull GitHub by itself. This plugin uses the native pattern:
-
-1. `Update URI: https://github.com/smvueno/harudigi-amelia-mcp-abilities`
-2. A small `update_plugins_github.com` filter that reads `/releases/latest`
-3. Release ZIPs attached by GitHub Actions (preferred over source zipballs)
-
-When the plugin is listed on **WordPress.org**, remove/gate the GitHub updater so wordpress.org is the sole update source.
-
-## Development
-
-```bash
-# Sibling of wordpress_test / harudigi-wp
-git clone https://github.com/smvueno/harudigi-amelia-mcp-abilities.git
-```
-
-Release: push a tag `v1.5.1` (or create a GitHub Release). CI builds the installable ZIP with the correct folder name.
+| How you installed | Updates from |
+|-------------------|--------------|
+| GitHub / direct ZIP | Public GitHub Releases (Update URI + updater in that ZIP) |
+| WordPress.org | wordpress.org only (wporg ZIP has no GitHub updater) |
 
 ## License
 
@@ -81,7 +51,7 @@ GPL-2.0-or-later. See [LICENSE](LICENSE).
 
 ## Links
 
-- [HaruDigi](https://harudigi.com) — SMB websites, reach, automations, trust  
-- [Plugin docs (GitHub Pages)](https://smvueno.github.io/harudigi-amelia-mcp-abilities/)  
-- [Issues](https://github.com/smvueno/harudigi-amelia-mcp-abilities/issues)  
-- [Security policy](SECURITY.md)
+- [HaruDigi](https://harudigi.com)
+- [Docs](https://smvueno.github.io/harudigi-amelia-mcp-abilities/)
+- [Issues](https://github.com/smvueno/harudigi-amelia-mcp-abilities/issues)
+- [Security](SECURITY.md)

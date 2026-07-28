@@ -2,28 +2,21 @@
 
 ## Supported versions
 
-We support the latest release of **Amelia MCP Abilities - HaruDigi** on the `main` branch and GitHub Releases.
+Latest release of **MCP Abilities for Amelia – HaruDigi** (`mcp-abilities-for-amelia`) on GitHub Releases.
 
 ## Reporting a vulnerability
 
 Please **do not** open a public GitHub issue for security problems.
 
-Email: **hello@harudigi.com** (subject: `Security — harudigi-amelia-mcp-abilities`)
+Email: **hello@harudigi.com** (subject: `Security — mcp-abilities-for-amelia`)
 
-Include:
-
-- Plugin version
-- WordPress / PHP / Easy MCP AI / Amelia versions
-- Steps to reproduce
-- Impact assessment (data exposure, privilege escalation, etc.)
-
-We aim to acknowledge reports within a few business days.
+Include plugin version, WordPress / PHP / Easy MCP AI / Amelia versions (Amelia must be 9.7+), steps to reproduce, and impact.
 
 ## Hardening notes (by design)
 
 - Payment / OAuth / SMTP secrets are redacted from MCP responses
 - Password and `externalId` writes are blocked over MCP
 - Destructive deletes require explicit `confirm=true`
-- Prefer cancel / hide / disable over permanent delete when possible
 
-Built by [HaruDigi](https://harudigi.com) — Jens Madsen.
+Built by [HaruDigi](https://harudigi.com) — Jens Madsen.  
+Independent plugin — not affiliated with or endorsed by TMS Software.

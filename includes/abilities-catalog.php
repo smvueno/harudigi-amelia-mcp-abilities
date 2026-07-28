@@ -8,6 +8,10 @@
 
 namespace Harudigi_Amelia_MCP_Abilities;
 
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 use AmeliaBooking\Application\Controller\Bookable\Category\AddCategoryController;
 use AmeliaBooking\Application\Controller\Bookable\Category\DeleteCategoryController;
 use AmeliaBooking\Application\Controller\Bookable\Category\GetCategoriesController;
@@ -55,38 +59,34 @@ use AmeliaBooking\Application\Controller\User\Provider\GetProviderController;
 use AmeliaBooking\Application\Controller\User\Provider\UpdateProviderController;
 use AmeliaBooking\Application\Controller\User\Provider\UpdateProviderStatusController;
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
-
 function register_catalog_abilities(): void {
 	// --- reads ---
-	r( 'amelia/get-service', __( 'Get Service', 'harudigi-amelia-mcp-abilities' ), __( 'One service by service_id (includes customPricing, extras). For booking-ready summary (duration_tiers 1h/2h/3h, extras, custom_fields) use amelia/get-service-booking-options.', 'harudigi-amelia-mcp-abilities' ), 'ability_get_service', true, Helpers::id_schema( 'service_id' ) );
+	r( 'amelia/get-service', __( 'Get Service', 'mcp-abilities-for-amelia' ), __( 'One service by service_id (includes customPricing, extras). For booking-ready summary (duration_tiers 1h/2h/3h, extras, custom_fields) use amelia/get-service-booking-options.', 'mcp-abilities-for-amelia' ), 'ability_get_service', true, Helpers::id_schema( 'service_id' ) );
 	r(
 		'amelia/get-service-booking-options',
-		__( 'Get Service Booking Options', 'harudigi-amelia-mcp-abilities' ),
-		__( 'Duration pricing tiers (1h/2h/3h as seconds + price), linked extras, and custom fields for a service. Call before create-appointment / check-availability.', 'harudigi-amelia-mcp-abilities' ),
+		__( 'Get Service Booking Options', 'mcp-abilities-for-amelia' ),
+		__( 'Duration pricing tiers (1h/2h/3h as seconds + price), linked extras, and custom fields for a service. Call before create-appointment / check-availability.', 'mcp-abilities-for-amelia' ),
 		'ability_get_service_booking_options',
 		true,
 		Helpers::id_schema( 'service_id' )
 	);
-	r( 'amelia/list-categories', __( 'List Categories', 'harudigi-amelia-mcp-abilities' ), __( 'Service categories.', 'harudigi-amelia-mcp-abilities' ), 'ability_list_categories', true );
-	r( 'amelia/get-category', __( 'Get Category', 'harudigi-amelia-mcp-abilities' ), __( 'One category by category_id.', 'harudigi-amelia-mcp-abilities' ), 'ability_get_category', true, Helpers::id_schema( 'category_id' ) );
-	r( 'amelia/list-locations', __( 'List Locations', 'harudigi-amelia-mcp-abilities' ), __( 'Paginated locations.', 'harudigi-amelia-mcp-abilities' ), 'ability_list_locations', true, Helpers::list_schema() );
-	r( 'amelia/get-location', __( 'Get Location', 'harudigi-amelia-mcp-abilities' ), __( 'One location by location_id.', 'harudigi-amelia-mcp-abilities' ), 'ability_get_location', true, Helpers::id_schema( 'location_id' ) );
-	r( 'amelia/get-employee', __( 'Get Employee', 'harudigi-amelia-mcp-abilities' ), __( 'One provider/employee by employee_id. Lists: amelia/list-employees.', 'harudigi-amelia-mcp-abilities' ), 'ability_get_employee', true, Helpers::id_schema( 'employee_id' ) );
-	r( 'amelia/list-packages', __( 'List Packages', 'harudigi-amelia-mcp-abilities' ), __( 'Paginated packages.', 'harudigi-amelia-mcp-abilities' ), 'ability_list_packages', true, Helpers::list_schema() );
-	r( 'amelia/get-package', __( 'Get Package', 'harudigi-amelia-mcp-abilities' ), __( 'One package by package_id.', 'harudigi-amelia-mcp-abilities' ), 'ability_get_package', true, Helpers::id_schema( 'package_id' ) );
-	r( 'amelia/list-extras', __( 'List Extras', 'harudigi-amelia-mcp-abilities' ), __( 'All service extras (id, name, price, duration). For extras linked to one service, prefer get-service-booking-options.', 'harudigi-amelia-mcp-abilities' ), 'ability_list_extras', true, Helpers::list_schema() );
-	r( 'amelia/get-extra', __( 'Get Extra', 'harudigi-amelia-mcp-abilities' ), __( 'One extra by extra_id.', 'harudigi-amelia-mcp-abilities' ), 'ability_get_extra', true, Helpers::id_schema( 'extra_id' ) );
-	r( 'amelia/list-resources', __( 'List Resources', 'harudigi-amelia-mcp-abilities' ), __( 'Resources (rooms/equipment).', 'harudigi-amelia-mcp-abilities' ), 'ability_list_resources', true, Helpers::list_schema() );
-	r( 'amelia/get-resource', __( 'Get Resource', 'harudigi-amelia-mcp-abilities' ), __( 'One resource by resource_id.', 'harudigi-amelia-mcp-abilities' ), 'ability_get_resource', true, Helpers::id_schema( 'resource_id' ) );
-	r( 'amelia/list-coupons', __( 'List Coupons', 'harudigi-amelia-mcp-abilities' ), __( 'Discount coupons.', 'harudigi-amelia-mcp-abilities' ), 'ability_list_coupons', true, Helpers::list_schema() );
-	r( 'amelia/get-coupon', __( 'Get Coupon', 'harudigi-amelia-mcp-abilities' ), __( 'One coupon by coupon_id.', 'harudigi-amelia-mcp-abilities' ), 'ability_get_coupon', true, Helpers::id_schema( 'coupon_id' ) );
+	r( 'amelia/list-categories', __( 'List Categories', 'mcp-abilities-for-amelia' ), __( 'Service categories.', 'mcp-abilities-for-amelia' ), 'ability_list_categories', true );
+	r( 'amelia/get-category', __( 'Get Category', 'mcp-abilities-for-amelia' ), __( 'One category by category_id.', 'mcp-abilities-for-amelia' ), 'ability_get_category', true, Helpers::id_schema( 'category_id' ) );
+	r( 'amelia/list-locations', __( 'List Locations', 'mcp-abilities-for-amelia' ), __( 'Paginated locations.', 'mcp-abilities-for-amelia' ), 'ability_list_locations', true, Helpers::list_schema() );
+	r( 'amelia/get-location', __( 'Get Location', 'mcp-abilities-for-amelia' ), __( 'One location by location_id.', 'mcp-abilities-for-amelia' ), 'ability_get_location', true, Helpers::id_schema( 'location_id' ) );
+	r( 'amelia/get-employee', __( 'Get Employee', 'mcp-abilities-for-amelia' ), __( 'One provider/employee by employee_id. Lists: amelia/list-employees.', 'mcp-abilities-for-amelia' ), 'ability_get_employee', true, Helpers::id_schema( 'employee_id' ) );
+	r( 'amelia/list-packages', __( 'List Packages', 'mcp-abilities-for-amelia' ), __( 'Paginated packages.', 'mcp-abilities-for-amelia' ), 'ability_list_packages', true, Helpers::list_schema() );
+	r( 'amelia/get-package', __( 'Get Package', 'mcp-abilities-for-amelia' ), __( 'One package by package_id.', 'mcp-abilities-for-amelia' ), 'ability_get_package', true, Helpers::id_schema( 'package_id' ) );
+	r( 'amelia/list-extras', __( 'List Extras', 'mcp-abilities-for-amelia' ), __( 'All service extras (id, name, price, duration). For extras linked to one service, prefer get-service-booking-options.', 'mcp-abilities-for-amelia' ), 'ability_list_extras', true, Helpers::list_schema() );
+	r( 'amelia/get-extra', __( 'Get Extra', 'mcp-abilities-for-amelia' ), __( 'One extra by extra_id.', 'mcp-abilities-for-amelia' ), 'ability_get_extra', true, Helpers::id_schema( 'extra_id' ) );
+	r( 'amelia/list-resources', __( 'List Resources', 'mcp-abilities-for-amelia' ), __( 'Resources (rooms/equipment).', 'mcp-abilities-for-amelia' ), 'ability_list_resources', true, Helpers::list_schema() );
+	r( 'amelia/get-resource', __( 'Get Resource', 'mcp-abilities-for-amelia' ), __( 'One resource by resource_id.', 'mcp-abilities-for-amelia' ), 'ability_get_resource', true, Helpers::id_schema( 'resource_id' ) );
+	r( 'amelia/list-coupons', __( 'List Coupons', 'mcp-abilities-for-amelia' ), __( 'Discount coupons.', 'mcp-abilities-for-amelia' ), 'ability_list_coupons', true, Helpers::list_schema() );
+	r( 'amelia/get-coupon', __( 'Get Coupon', 'mcp-abilities-for-amelia' ), __( 'One coupon by coupon_id.', 'mcp-abilities-for-amelia' ), 'ability_get_coupon', true, Helpers::id_schema( 'coupon_id' ) );
 	r(
 		'amelia/list-custom-fields',
-		__( 'List Custom Fields', 'harudigi-amelia-mcp-abilities' ),
-		__( 'Amelia custom fields. Optional service_id filters to that service; for_events=true lists event fields. Prefer get-service-booking-options when booking a known service.', 'harudigi-amelia-mcp-abilities' ),
+		__( 'List Custom Fields', 'mcp-abilities-for-amelia' ),
+		__( 'Amelia custom fields. Optional service_id filters to that service; for_events=true lists event fields. Prefer get-service-booking-options when booking a known service.', 'mcp-abilities-for-amelia' ),
 		'ability_list_custom_fields',
 		true,
 		Helpers::list_schema(
@@ -100,53 +100,53 @@ function register_catalog_abilities(): void {
 	// --- service writes (add-service is native) ---
 	r(
 		'amelia/update-service',
-		__( 'Update Service', 'harudigi-amelia-mcp-abilities' ),
-		__( 'Update service. service_id + partial fields (merged onto existing). Supports customPricing for duration tiers: {enabled:"duration", durations:[{duration:"1h",price:70},{duration:7200,price:120}]} or Amelia map. Also name/price/duration/providers. applyGlobally defaults false.', 'harudigi-amelia-mcp-abilities' ),
+		__( 'Update Service', 'mcp-abilities-for-amelia' ),
+		__( 'Update service. service_id + partial fields (merged onto existing). Supports customPricing for duration tiers: {enabled:"duration", durations:[{duration:"1h",price:70},{duration:7200,price:120}]} or Amelia map. Also name/price/duration/providers. applyGlobally defaults false.', 'mcp-abilities-for-amelia' ),
 		'ability_update_service',
 		false,
 		fields_id_schema( 'service_id' ),
 		false,
 		true
 	);
-	r( 'amelia/update-service-status', __( 'Update Service Status', 'harudigi-amelia-mcp-abilities' ), __( 'Set service status (visible/hidden/disabled). Prefer hidden/disabled over delete.', 'harudigi-amelia-mcp-abilities' ), 'ability_update_service_status', false, status_id_schema( 'service_id' ) );
-	r( 'amelia/delete-service', __( 'Delete Service', 'harudigi-amelia-mcp-abilities' ), __( 'PERMANENT delete. Prefer update-service-status (hidden/disabled). Requires confirm=true after user approval.', 'harudigi-amelia-mcp-abilities' ), 'ability_delete_service', false, Helpers::id_confirm_schema( 'service_id' ), true, false );
+	r( 'amelia/update-service-status', __( 'Update Service Status', 'mcp-abilities-for-amelia' ), __( 'Set service status (visible/hidden/disabled). Prefer hidden/disabled over delete.', 'mcp-abilities-for-amelia' ), 'ability_update_service_status', false, status_id_schema( 'service_id' ) );
+	r( 'amelia/delete-service', __( 'Delete Service', 'mcp-abilities-for-amelia' ), __( 'PERMANENT delete. Prefer update-service-status (hidden/disabled). Requires confirm=true after user approval.', 'mcp-abilities-for-amelia' ), 'ability_delete_service', false, Helpers::id_confirm_schema( 'service_id' ), true, false );
 
-	r( 'amelia/add-category', __( 'Add Category', 'harudigi-amelia-mcp-abilities' ), __( 'Create category. Requires name (flat or fields).', 'harudigi-amelia-mcp-abilities' ), 'ability_add_category', false, Helpers::create_schema( array( 'name' ), array( 'name' => array( 'type' => 'string' ), 'status' => array( 'type' => 'string', 'description' => 'visible|hidden' ), 'color' => array( 'type' => 'string' ), 'position' => array( 'type' => 'integer' ), 'fields' => array( 'type' => 'object' ) ) ), false, false );
-	r( 'amelia/update-category', __( 'Update Category', 'harudigi-amelia-mcp-abilities' ), __( 'Update category. category_id + fields.', 'harudigi-amelia-mcp-abilities' ), 'ability_update_category', false, fields_id_schema( 'category_id' ), false, true );
-	r( 'amelia/delete-category', __( 'Delete Category', 'harudigi-amelia-mcp-abilities' ), __( 'PERMANENT delete. Prefer hiding unused categories. Requires confirm=true after user approval.', 'harudigi-amelia-mcp-abilities' ), 'ability_delete_category', false, Helpers::id_confirm_schema( 'category_id' ), true, false );
+	r( 'amelia/add-category', __( 'Add Category', 'mcp-abilities-for-amelia' ), __( 'Create category. Requires name (flat or fields).', 'mcp-abilities-for-amelia' ), 'ability_add_category', false, Helpers::create_schema( array( 'name' ), array( 'name' => array( 'type' => 'string' ), 'status' => array( 'type' => 'string', 'description' => 'visible|hidden' ), 'color' => array( 'type' => 'string' ), 'position' => array( 'type' => 'integer' ), 'fields' => array( 'type' => 'object' ) ) ), false, false );
+	r( 'amelia/update-category', __( 'Update Category', 'mcp-abilities-for-amelia' ), __( 'Update category. category_id + fields.', 'mcp-abilities-for-amelia' ), 'ability_update_category', false, fields_id_schema( 'category_id' ), false, true );
+	r( 'amelia/delete-category', __( 'Delete Category', 'mcp-abilities-for-amelia' ), __( 'PERMANENT delete. Prefer hiding unused categories. Requires confirm=true after user approval.', 'mcp-abilities-for-amelia' ), 'ability_delete_category', false, Helpers::id_confirm_schema( 'category_id' ), true, false );
 
-	r( 'amelia/add-location', __( 'Add Location', 'harudigi-amelia-mcp-abilities' ), __( 'Create location. Requires name. address/lat/lng optional (sensible defaults applied when omitted, same as common admin flows).', 'harudigi-amelia-mcp-abilities' ), 'ability_add_location', false, fields_body_schema( array( 'name' ) ), false, false );
-	r( 'amelia/update-location', __( 'Update Location', 'harudigi-amelia-mcp-abilities' ), __( 'Update location. location_id + fields.', 'harudigi-amelia-mcp-abilities' ), 'ability_update_location', false, fields_id_schema( 'location_id' ), false, true );
-	r( 'amelia/update-location-status', __( 'Update Location Status', 'harudigi-amelia-mcp-abilities' ), __( 'Set location status. Prefer hidden/disabled over delete.', 'harudigi-amelia-mcp-abilities' ), 'ability_update_location_status', false, status_id_schema( 'location_id' ) );
-	r( 'amelia/delete-location', __( 'Delete Location', 'harudigi-amelia-mcp-abilities' ), __( 'PERMANENT delete. Prefer update-location-status. Requires confirm=true after user approval.', 'harudigi-amelia-mcp-abilities' ), 'ability_delete_location', false, Helpers::id_confirm_schema( 'location_id' ), true, false );
+	r( 'amelia/add-location', __( 'Add Location', 'mcp-abilities-for-amelia' ), __( 'Create location. Requires name. address/lat/lng optional (sensible defaults applied when omitted, same as common admin flows).', 'mcp-abilities-for-amelia' ), 'ability_add_location', false, fields_body_schema( array( 'name' ) ), false, false );
+	r( 'amelia/update-location', __( 'Update Location', 'mcp-abilities-for-amelia' ), __( 'Update location. location_id + fields.', 'mcp-abilities-for-amelia' ), 'ability_update_location', false, fields_id_schema( 'location_id' ), false, true );
+	r( 'amelia/update-location-status', __( 'Update Location Status', 'mcp-abilities-for-amelia' ), __( 'Set location status. Prefer hidden/disabled over delete.', 'mcp-abilities-for-amelia' ), 'ability_update_location_status', false, status_id_schema( 'location_id' ) );
+	r( 'amelia/delete-location', __( 'Delete Location', 'mcp-abilities-for-amelia' ), __( 'PERMANENT delete. Prefer update-location-status. Requires confirm=true after user approval.', 'mcp-abilities-for-amelia' ), 'ability_delete_location', false, Helpers::id_confirm_schema( 'location_id' ), true, false );
 
-	r( 'amelia/add-employee', __( 'Add Employee', 'harudigi-amelia-mcp-abilities' ), __( 'Create provider. firstName required; lastName/email optional (empty allowed, same as Amelia admin — do not invent fake emails). Optional serviceList, weekDayList. Password/WP-user link blocked.', 'harudigi-amelia-mcp-abilities' ), 'ability_add_employee', false, fields_body_schema( array( 'firstName' ) ), false, false );
-	r( 'amelia/update-employee', __( 'Update Employee', 'harudigi-amelia-mcp-abilities' ), __( 'Update provider. employee_id + fields. Password/externalId blocked.', 'harudigi-amelia-mcp-abilities' ), 'ability_update_employee', false, fields_id_schema( 'employee_id' ), false, true );
-	r( 'amelia/update-employee-status', __( 'Update Employee Status', 'harudigi-amelia-mcp-abilities' ), __( 'Set employee status. Prefer hidden/disabled over delete.', 'harudigi-amelia-mcp-abilities' ), 'ability_update_employee_status', false, status_id_schema( 'employee_id' ) );
-	r( 'amelia/delete-employee', __( 'Delete Employee', 'harudigi-amelia-mcp-abilities' ), __( 'PERMANENT delete (refused if future appointments). Prefer status change. Requires confirm=true after user approval.', 'harudigi-amelia-mcp-abilities' ), 'ability_delete_employee', false, Helpers::id_confirm_schema( 'employee_id' ), true, false );
+	r( 'amelia/add-employee', __( 'Add Employee', 'mcp-abilities-for-amelia' ), __( 'Create provider. firstName required; lastName/email optional (empty allowed, same as Amelia admin — do not invent fake emails). Optional serviceList, weekDayList. Password/WP-user link blocked.', 'mcp-abilities-for-amelia' ), 'ability_add_employee', false, fields_body_schema( array( 'firstName' ) ), false, false );
+	r( 'amelia/update-employee', __( 'Update Employee', 'mcp-abilities-for-amelia' ), __( 'Update provider. employee_id + fields. Password/externalId blocked.', 'mcp-abilities-for-amelia' ), 'ability_update_employee', false, fields_id_schema( 'employee_id' ), false, true );
+	r( 'amelia/update-employee-status', __( 'Update Employee Status', 'mcp-abilities-for-amelia' ), __( 'Set employee status. Prefer hidden/disabled over delete.', 'mcp-abilities-for-amelia' ), 'ability_update_employee_status', false, status_id_schema( 'employee_id' ) );
+	r( 'amelia/delete-employee', __( 'Delete Employee', 'mcp-abilities-for-amelia' ), __( 'PERMANENT delete (refused if future appointments). Prefer status change. Requires confirm=true after user approval.', 'mcp-abilities-for-amelia' ), 'ability_delete_employee', false, Helpers::id_confirm_schema( 'employee_id' ), true, false );
 
-	r( 'amelia/add-package', __( 'Add Package', 'harudigi-amelia-mcp-abilities' ), __( 'Create package. Amelia requires name, price, calculatedPrice, and bookable (services). Pass via fields.', 'harudigi-amelia-mcp-abilities' ), 'ability_add_package', false, fields_body_schema( array( 'name', 'price' ) ), false, false );
-	r( 'amelia/update-package', __( 'Update Package', 'harudigi-amelia-mcp-abilities' ), __( 'Update package. package_id + fields.', 'harudigi-amelia-mcp-abilities' ), 'ability_update_package', false, fields_id_schema( 'package_id' ), false, true );
-	r( 'amelia/update-package-status', __( 'Update Package Status', 'harudigi-amelia-mcp-abilities' ), __( 'Set package status. Prefer hidden/disabled over delete.', 'harudigi-amelia-mcp-abilities' ), 'ability_update_package_status', false, status_id_schema( 'package_id' ) );
-	r( 'amelia/delete-package', __( 'Delete Package', 'harudigi-amelia-mcp-abilities' ), __( 'PERMANENT delete. Prefer update-package-status. Requires confirm=true after user approval.', 'harudigi-amelia-mcp-abilities' ), 'ability_delete_package', false, Helpers::id_confirm_schema( 'package_id' ), true, false );
+	r( 'amelia/add-package', __( 'Add Package', 'mcp-abilities-for-amelia' ), __( 'Create package. Amelia requires name, price, calculatedPrice, and bookable (services). Pass via fields.', 'mcp-abilities-for-amelia' ), 'ability_add_package', false, fields_body_schema( array( 'name', 'price' ) ), false, false );
+	r( 'amelia/update-package', __( 'Update Package', 'mcp-abilities-for-amelia' ), __( 'Update package. package_id + fields.', 'mcp-abilities-for-amelia' ), 'ability_update_package', false, fields_id_schema( 'package_id' ), false, true );
+	r( 'amelia/update-package-status', __( 'Update Package Status', 'mcp-abilities-for-amelia' ), __( 'Set package status. Prefer hidden/disabled over delete.', 'mcp-abilities-for-amelia' ), 'ability_update_package_status', false, status_id_schema( 'package_id' ) );
+	r( 'amelia/delete-package', __( 'Delete Package', 'mcp-abilities-for-amelia' ), __( 'PERMANENT delete. Prefer update-package-status. Requires confirm=true after user approval.', 'mcp-abilities-for-amelia' ), 'ability_delete_package', false, Helpers::id_confirm_schema( 'package_id' ), true, false );
 
-	r( 'amelia/add-extra', __( 'Add Extra', 'harudigi-amelia-mcp-abilities' ), __( 'Create service extra. Requires name, price, and serviceId (DB requires serviceId).', 'harudigi-amelia-mcp-abilities' ), 'ability_add_extra', false, fields_body_schema( array( 'name', 'price', 'serviceId' ) ), false, false );
-	r( 'amelia/update-extra', __( 'Update Extra', 'harudigi-amelia-mcp-abilities' ), __( 'Update extra. extra_id + fields.', 'harudigi-amelia-mcp-abilities' ), 'ability_update_extra', false, fields_id_schema( 'extra_id' ), false, true );
-	r( 'amelia/delete-extra', __( 'Delete Extra', 'harudigi-amelia-mcp-abilities' ), __( 'PERMANENT delete. Requires confirm=true after user approval.', 'harudigi-amelia-mcp-abilities' ), 'ability_delete_extra', false, Helpers::id_confirm_schema( 'extra_id' ), true, false );
+	r( 'amelia/add-extra', __( 'Add Extra', 'mcp-abilities-for-amelia' ), __( 'Create service extra. Requires name, price, and serviceId (DB requires serviceId).', 'mcp-abilities-for-amelia' ), 'ability_add_extra', false, fields_body_schema( array( 'name', 'price', 'serviceId' ) ), false, false );
+	r( 'amelia/update-extra', __( 'Update Extra', 'mcp-abilities-for-amelia' ), __( 'Update extra. extra_id + fields.', 'mcp-abilities-for-amelia' ), 'ability_update_extra', false, fields_id_schema( 'extra_id' ), false, true );
+	r( 'amelia/delete-extra', __( 'Delete Extra', 'mcp-abilities-for-amelia' ), __( 'PERMANENT delete. Requires confirm=true after user approval.', 'mcp-abilities-for-amelia' ), 'ability_delete_extra', false, Helpers::id_confirm_schema( 'extra_id' ), true, false );
 
-	r( 'amelia/add-resource', __( 'Add Resource', 'harudigi-amelia-mcp-abilities' ), __( 'Create resource. fields: name, quantity, …', 'harudigi-amelia-mcp-abilities' ), 'ability_add_resource', false, fields_body_schema( array( 'name' ) ), false, false );
-	r( 'amelia/update-resource', __( 'Update Resource', 'harudigi-amelia-mcp-abilities' ), __( 'Update resource. resource_id + fields.', 'harudigi-amelia-mcp-abilities' ), 'ability_update_resource', false, fields_id_schema( 'resource_id' ), false, true );
-	r( 'amelia/update-resource-status', __( 'Update Resource Status', 'harudigi-amelia-mcp-abilities' ), __( 'Set resource status. Prefer status change over delete.', 'harudigi-amelia-mcp-abilities' ), 'ability_update_resource_status', false, status_id_schema( 'resource_id' ) );
-	r( 'amelia/delete-resource', __( 'Delete Resource', 'harudigi-amelia-mcp-abilities' ), __( 'PERMANENT delete. Prefer update-resource-status. Requires confirm=true after user approval.', 'harudigi-amelia-mcp-abilities' ), 'ability_delete_resource', false, Helpers::id_confirm_schema( 'resource_id' ), true, false );
+	r( 'amelia/add-resource', __( 'Add Resource', 'mcp-abilities-for-amelia' ), __( 'Create resource. fields: name, quantity, …', 'mcp-abilities-for-amelia' ), 'ability_add_resource', false, fields_body_schema( array( 'name' ) ), false, false );
+	r( 'amelia/update-resource', __( 'Update Resource', 'mcp-abilities-for-amelia' ), __( 'Update resource. resource_id + fields.', 'mcp-abilities-for-amelia' ), 'ability_update_resource', false, fields_id_schema( 'resource_id' ), false, true );
+	r( 'amelia/update-resource-status', __( 'Update Resource Status', 'mcp-abilities-for-amelia' ), __( 'Set resource status. Prefer status change over delete.', 'mcp-abilities-for-amelia' ), 'ability_update_resource_status', false, status_id_schema( 'resource_id' ) );
+	r( 'amelia/delete-resource', __( 'Delete Resource', 'mcp-abilities-for-amelia' ), __( 'PERMANENT delete. Prefer update-resource-status. Requires confirm=true after user approval.', 'mcp-abilities-for-amelia' ), 'ability_delete_resource', false, Helpers::id_confirm_schema( 'resource_id' ), true, false );
 
-	r( 'amelia/add-coupon', __( 'Add Coupon', 'harudigi-amelia-mcp-abilities' ), __( 'Create coupon. Amelia requires code plus discount, deduction, limit, status, and service/event/package lists (can be empty arrays).', 'harudigi-amelia-mcp-abilities' ), 'ability_add_coupon', false, fields_body_schema( array( 'code' ) ), false, false );
-	r( 'amelia/update-coupon', __( 'Update Coupon', 'harudigi-amelia-mcp-abilities' ), __( 'Update coupon. coupon_id + fields.', 'harudigi-amelia-mcp-abilities' ), 'ability_update_coupon', false, fields_id_schema( 'coupon_id' ), false, true );
-	r( 'amelia/delete-coupon', __( 'Delete Coupon', 'harudigi-amelia-mcp-abilities' ), __( 'PERMANENT delete. Requires confirm=true after user approval.', 'harudigi-amelia-mcp-abilities' ), 'ability_delete_coupon', false, Helpers::id_confirm_schema( 'coupon_id' ), true, false );
+	r( 'amelia/add-coupon', __( 'Add Coupon', 'mcp-abilities-for-amelia' ), __( 'Create coupon. Amelia requires code plus discount, deduction, limit, status, and service/event/package lists (can be empty arrays).', 'mcp-abilities-for-amelia' ), 'ability_add_coupon', false, fields_body_schema( array( 'code' ) ), false, false );
+	r( 'amelia/update-coupon', __( 'Update Coupon', 'mcp-abilities-for-amelia' ), __( 'Update coupon. coupon_id + fields.', 'mcp-abilities-for-amelia' ), 'ability_update_coupon', false, fields_id_schema( 'coupon_id' ), false, true );
+	r( 'amelia/delete-coupon', __( 'Delete Coupon', 'mcp-abilities-for-amelia' ), __( 'PERMANENT delete. Requires confirm=true after user approval.', 'mcp-abilities-for-amelia' ), 'ability_delete_coupon', false, Helpers::id_confirm_schema( 'coupon_id' ), true, false );
 
 	r(
 		'amelia/add-custom-field',
-		__( 'Add Custom Field', 'harudigi-amelia-mcp-abilities' ),
-		__( 'Create a booking/event custom field. Required: label, type (text|textarea|select|checkbox|radio|…). Optional: required, service_ids / all_services, options for select/radio.', 'harudigi-amelia-mcp-abilities' ),
+		__( 'Add Custom Field', 'mcp-abilities-for-amelia' ),
+		__( 'Create a booking/event custom field. Required: label, type (text|textarea|select|checkbox|radio|…). Optional: required, service_ids / all_services, options for select/radio.', 'mcp-abilities-for-amelia' ),
 		'ability_add_custom_field',
 		false,
 		Helpers::create_schema(
@@ -167,8 +167,8 @@ function register_catalog_abilities(): void {
 	);
 	r(
 		'amelia/update-custom-field',
-		__( 'Update Custom Field', 'harudigi-amelia-mcp-abilities' ),
-		__( 'Update custom field. custom_field_id + fields (label, type, required, services, options, …). Partial fields are merged onto the existing field.', 'harudigi-amelia-mcp-abilities' ),
+		__( 'Update Custom Field', 'mcp-abilities-for-amelia' ),
+		__( 'Update custom field. custom_field_id + fields (label, type, required, services, options, …). Partial fields are merged onto the existing field.', 'mcp-abilities-for-amelia' ),
 		'ability_update_custom_field',
 		false,
 		fields_id_schema( 'custom_field_id' ),
@@ -177,8 +177,8 @@ function register_catalog_abilities(): void {
 	);
 	r(
 		'amelia/delete-custom-field',
-		__( 'Delete Custom Field', 'harudigi-amelia-mcp-abilities' ),
-		__( 'PERMANENT delete. Requires confirm=true after user approval.', 'harudigi-amelia-mcp-abilities' ),
+		__( 'Delete Custom Field', 'mcp-abilities-for-amelia' ),
+		__( 'PERMANENT delete. Requires confirm=true after user approval.', 'mcp-abilities-for-amelia' ),
 		'ability_delete_custom_field',
 		false,
 		Helpers::id_confirm_schema( 'custom_field_id' ),
@@ -352,7 +352,7 @@ function ability_update_service( array $i = array() ) {
 	}
 	$existing = $existing_res['data']['service'] ?? ( $existing_res['service'] ?? $existing_res );
 	if ( ! is_array( $existing ) ) {
-		return new \WP_Error( 'amelia_not_found', __( 'Service not found.', 'harudigi-amelia-mcp-abilities' ) );
+		return new \WP_Error( 'amelia_not_found', __( 'Service not found.', 'mcp-abilities-for-amelia' ) );
 	}
 	$fields = merge_service_update_fields( $existing, $patch );
 	return Helpers::invoke( UpdateServiceController::class, $fields, array( 'id' => $id ) );
@@ -366,7 +366,7 @@ function ability_add_category( array $i = array() ) {
 		return $fields;
 	}
 	if ( empty( $fields['name'] ) ) {
-		return new \WP_Error( 'invalid_fields', __( 'name is required.', 'harudigi-amelia-mcp-abilities' ) );
+		return new \WP_Error( 'invalid_fields', __( 'name is required.', 'mcp-abilities-for-amelia' ) );
 	}
 	$fields['status']   = $fields['status'] ?? 'visible';
 	$fields['position'] = isset( $fields['position'] ) ? (int) $fields['position'] : 1;
@@ -382,7 +382,7 @@ function ability_add_location( array $i = array() ) {
 		return $fields;
 	}
 	if ( empty( $fields['name'] ) ) {
-		return new \WP_Error( 'invalid_fields', __( 'name is required.', 'harudigi-amelia-mcp-abilities' ) );
+		return new \WP_Error( 'invalid_fields', __( 'name is required.', 'mcp-abilities-for-amelia' ) );
 	}
 	$fields['status']    = $fields['status'] ?? 'visible';
 	// Amelia GeoTag treats 0 as empty — default to a non-zero placeholder if omitted.
@@ -406,7 +406,7 @@ function ability_add_employee( array $i = array() ) {
 	}
 	$first = sanitize_text_field( (string) ( $fields['firstName'] ?? '' ) );
 	if ( '' === $first ) {
-		return new \WP_Error( 'invalid_firstName', __( 'firstName is required.', 'harudigi-amelia-mcp-abilities' ) );
+		return new \WP_Error( 'invalid_firstName', __( 'firstName is required.', 'mcp-abilities-for-amelia' ) );
 	}
 	$fields['firstName'] = $first;
 	// Amelia mandatoryFields treats null as missing; empty string matches admin UI.
@@ -417,7 +417,7 @@ function ability_add_employee( array $i = array() ) {
 		if ( '' === $email || ! is_email( $email ) ) {
 			return new \WP_Error(
 				'invalid_email',
-				__( 'email is invalid. Omit email or pass an empty string when unknown.', 'harudigi-amelia-mcp-abilities' )
+				__( 'email is invalid. Omit email or pass an empty string when unknown.', 'mcp-abilities-for-amelia' )
 			);
 		}
 		$fields['email'] = $email;
@@ -476,7 +476,7 @@ function ability_add_extra( array $i = array() ) {
 		return $fields;
 	}
 	if ( empty( $fields['serviceId'] ) ) {
-		return new \WP_Error( 'missing_service_id', __( 'serviceId is required for extras.', 'harudigi-amelia-mcp-abilities' ) );
+		return new \WP_Error( 'missing_service_id', __( 'serviceId is required for extras.', 'mcp-abilities-for-amelia' ) );
 	}
 	$fields['maxQuantity']     = isset( $fields['maxQuantity'] ) ? (int) $fields['maxQuantity'] : 1;
 	$fields['aggregatedPrice'] = array_key_exists( 'aggregatedPrice', $fields ) ? $fields['aggregatedPrice'] : true;
@@ -500,7 +500,7 @@ function ability_update_extra( array $i = array() ) {
 	}
 	$existing = $existing_res['data']['extra'] ?? ( $existing_res['extra'] ?? $existing_res );
 	if ( ! is_array( $existing ) ) {
-		return new \WP_Error( 'amelia_not_found', __( 'Extra not found.', 'harudigi-amelia-mcp-abilities' ) );
+		return new \WP_Error( 'amelia_not_found', __( 'Extra not found.', 'mcp-abilities-for-amelia' ) );
 	}
 	$fields = array_merge( $existing, $patch );
 	$fields['id']          = $id;
@@ -539,7 +539,7 @@ function ability_add_coupon( array $i = array() ) {
 		return $fields;
 	}
 	if ( empty( $fields['code'] ) ) {
-		return new \WP_Error( 'invalid_fields', __( 'code is required.', 'harudigi-amelia-mcp-abilities' ) );
+		return new \WP_Error( 'invalid_fields', __( 'code is required.', 'mcp-abilities-for-amelia' ) );
 	}
 	// Amelia mandatoryFields — empty/zero defaults match typical admin create form.
 	$fields['discount']  = isset( $fields['discount'] ) ? $fields['discount'] : 0;
@@ -611,7 +611,7 @@ function ability_add_custom_field( array $i = array() ) {
 	$label = sanitize_text_field( (string) ( $cf['label'] ?? '' ) );
 	$type  = normalize_custom_field_type( $cf['type'] ?? 'text' );
 	if ( '' === $label || '' === $type ) {
-		return new \WP_Error( 'invalid_fields', __( 'label and type are required.', 'harudigi-amelia-mcp-abilities' ) );
+		return new \WP_Error( 'invalid_fields', __( 'label and type are required.', 'mcp-abilities-for-amelia' ) );
 	}
 
 	$all_services = ! empty( $cf['allServices'] ) || ! empty( $cf['all_services'] );
@@ -677,7 +677,7 @@ function ability_update_custom_field( array $i = array() ) {
 		}
 	}
 	if ( ! $existing ) {
-		return new \WP_Error( 'amelia_not_found', __( 'Custom field not found.', 'harudigi-amelia-mcp-abilities' ) );
+		return new \WP_Error( 'amelia_not_found', __( 'Custom field not found.', 'mcp-abilities-for-amelia' ) );
 	}
 
 	$merged = array_merge( $existing, $patch );

@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Amelia MCP Abilities - HaruDigi — Extra Amelia tools for Easy MCP AI</title>
-  <meta name="description" content="Amelia MCP Abilities - HaruDigi adds safe Amelia Booking abilities to Easy MCP AI. Built by HaruDigi for SMBs that need a proper website, stronger reach, automations, and trust." />
+  <title>MCP Abilities for Amelia – HaruDigi — Extra Amelia tools for Easy MCP AI</title>
+  <meta name="description" content="MCP Abilities for Amelia – HaruDigi adds safe Amelia Booking 9.7+ abilities to Easy MCP AI. Independent HaruDigi plugin — not affiliated with TMS Software." />
   <meta name="author" content="Jens Madsen, HaruDigi" />
   <link rel="canonical" href="https://smvueno.github.io/harudigi-amelia-mcp-abilities/" />
-  <meta property="og:title" content="Amelia MCP Abilities - HaruDigi" />
-  <meta property="og:description" content="Extra Amelia Booking abilities for Easy MCP AI. By HaruDigi." />
+  <meta property="og:title" content="MCP Abilities for Amelia – HaruDigi" />
+  <meta property="og:description" content="Extra Amelia Booking 9.7+ abilities for Easy MCP AI. By HaruDigi." />
   <meta property="og:url" content="https://smvueno.github.io/harudigi-amelia-mcp-abilities/" />
   <meta property="og:type" content="website" />
   <meta name="theme-color" content="#4A6DB5" />
@@ -19,9 +19,7 @@
       --muted: #5C4437;
       --brand: #4A6DB5;
       --accent: #FF7B54;
-      --tangerine: #FF6B00;
       --paper: #FFFFFF;
-      --card: #FBF6F1;
       --line: #EDE4DC;
       --max: 44rem;
     }
@@ -30,10 +28,6 @@
       margin: 0;
       font-family: Inter, "Segoe UI", system-ui, sans-serif;
       color: var(--ink);
-      background:
-        radial-gradient(ellipse 70% 45% at 90% 0%, rgba(255, 178, 107, 0.28), transparent 55%),
-        radial-gradient(ellipse 50% 40% at 0% 100%, rgba(74, 109, 181, 0.10), transparent 50%),
-        var(--paper);
       background-image:
         linear-gradient(rgba(58, 35, 26, 0.05) 1px, transparent 1px),
         linear-gradient(90deg, rgba(58, 35, 26, 0.05) 1px, transparent 1px),
@@ -48,79 +42,52 @@
     a:hover { color: #3F5D9A; }
     .wrap { max-width: var(--max); margin: 0 auto; padding: 2rem 1.25rem 4rem; }
     .hero-banner {
-      width: 100%;
-      height: auto;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      margin: 0 0 1.75rem;
-      display: block;
-      background: #fff;
+      width: 100%; height: auto; border: 1px solid var(--line);
+      border-radius: 8px; margin: 0 0 1.75rem; display: block; background: #fff;
     }
     .brand {
       font-family: Poppins, "Segoe UI", system-ui, sans-serif;
-      font-weight: 600;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      font-size: 0.75rem;
-      color: var(--brand);
-      margin: 0 0 0.75rem;
+      font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+      font-size: 0.75rem; color: var(--brand); margin: 0 0 0.75rem;
     }
     h1 {
       font-family: Poppins, "Segoe UI", system-ui, sans-serif;
-      font-size: clamp(1.75rem, 4vw, 2.25rem);
-      line-height: 1.15;
-      margin: 0 0 0.75rem;
-      font-weight: 700;
+      font-size: clamp(1.75rem, 4vw, 2.25rem); line-height: 1.15;
+      margin: 0 0 0.75rem; font-weight: 700;
     }
     .lede { font-size: 1.1rem; color: var(--muted); margin: 0 0 1.75rem; }
-    .cta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-      margin-bottom: 2.5rem;
-    }
+    .cta { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 2.5rem; }
     .btn {
-      font-family: "Segoe UI", system-ui, sans-serif;
-      font-size: 0.95rem;
-      font-weight: 600;
-      text-decoration: none;
-      padding: 0.7rem 1.1rem;
-      border-radius: 4px;
-      border: 1px solid transparent;
+      font-family: "Segoe UI", system-ui, sans-serif; font-size: 0.95rem; font-weight: 600;
+      text-decoration: none; padding: 0.7rem 1.1rem; border-radius: 4px; border: 1px solid transparent;
     }
     .btn-primary { background: var(--brand); color: #fff; }
     .btn-primary:hover { background: #3F5D9A; color: #fff; }
     .btn-ghost { background: #fff; color: var(--ink); border-color: var(--line); }
     section {
-      background: rgba(255, 255, 255, 0.92);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 1.25rem 1.35rem;
-      margin-bottom: 1rem;
+      background: rgba(255, 255, 255, 0.92); border: 1px solid var(--line);
+      border-radius: 8px; padding: 1.25rem 1.35rem; margin-bottom: 1rem;
     }
     section h2 {
       font-family: Poppins, "Segoe UI", system-ui, sans-serif;
-      font-size: 1.1rem;
-      margin: 0 0 0.5rem;
+      font-size: 1.1rem; margin: 0 0 0.5rem;
     }
     section p, section li { color: var(--muted); margin: 0 0 0.5rem; }
-    section ul { margin: 0.35rem 0 0; padding-left: 1.2rem; }
+    section ul, section ol { margin: 0.35rem 0 0; padding-left: 1.2rem; }
     footer {
-      margin-top: 2rem;
-      font-family: "Segoe UI", system-ui, sans-serif;
-      font-size: 0.85rem;
-      color: var(--muted);
+      margin-top: 2rem; font-family: "Segoe UI", system-ui, sans-serif;
+      font-size: 0.85rem; color: var(--muted);
     }
     footer strong { color: var(--ink); }
   </style>
 </head>
 <body>
   <main class="wrap">
-    <img class="hero-banner" src="banner.png" width="772" height="250" alt="Amelia MCP Abilities - HaruDigi" />
+    <img class="hero-banner" src="banner.png" width="772" height="250" alt="MCP Abilities for Amelia – HaruDigi" />
     <p class="brand"><a href="https://harudigi.com">HaruDigi</a></p>
-    <h1>Amelia MCP Abilities</h1>
+    <h1>MCP Abilities for Amelia</h1>
     <p class="lede">
-      Extra Amelia Booking abilities for Easy MCP AI — catalog, bookings, payments, and settings — without exposing secrets.
+      Extra Amelia Booking <strong>9.7+</strong> abilities for Easy MCP AI — catalog, bookings, payments, and settings — without exposing secrets.
     </p>
     <div class="cta">
       <a class="btn btn-primary" href="https://github.com/smvueno/harudigi-amelia-mcp-abilities/releases">Download latest release</a>
@@ -129,43 +96,29 @@
     </div>
 
     <section>
-      <h2>Built for SMBs that want AI-ready ops</h2>
+      <h2>Independent HaruDigi plugin</h2>
       <p>
-        <strong>HaruDigi</strong> helps small and mid-sized businesses get a proper website,
-        stronger reach to clients, practical automations, and trust — with customers and with AI engines.
-        <em>Haru</em> means new beginning and spring; <em>Digi</em> means digital.
+        <strong>MCP Abilities for Amelia</strong> is an independent plugin by <strong>HaruDigi</strong>
+        and is <strong>not affiliated with or endorsed by TMS Software</strong> (Amelia Booking).
       </p>
-      <p>Author: <strong>Jens Madsen</strong> · Brand: <strong>HaruDigi</strong></p>
+      <p>Author: <strong>Jens Madsen</strong> · Brand: <strong>HaruDigi</strong> · Slug: <code>mcp-abilities-for-amelia</code></p>
     </section>
 
     <section>
-      <h2>What the plugin does</h2>
+      <h2>Requirements</h2>
       <ul>
-        <li>Adds Amelia abilities to Easy MCP AI (does not duplicate Amelia core tools)</li>
-        <li>Catalog, booking, payment, and settings coverage for AI agents</li>
-        <li>Redacts secrets; blocks unsafe password / externalId writes</li>
-        <li>Requires explicit confirmation for destructive deletes</li>
-        <li>Updates from public GitHub Releases via WordPress’ native Update URI flow</li>
+        <li><strong>Easy MCP AI</strong> (required)</li>
+        <li><strong>Amelia Booking 9.7+</strong> (required for abilities to run)</li>
+        <li>WordPress 6.9+ · PHP 7.4+</li>
       </ul>
     </section>
 
     <section>
-      <h2>Install in minutes</h2>
-      <ol>
-        <li>Install &amp; activate <strong>Easy MCP AI</strong> (required)</li>
-        <li>Upload the release ZIP (folder must be <code>harudigi-amelia-mcp-abilities</code>)</li>
-        <li>Activate <strong>Amelia MCP Abilities - HaruDigi</strong></li>
-        <li>Activate Amelia Booking so the abilities can run</li>
-        <li>Optional: turn on auto-updates in Plugins</li>
-      </ol>
-    </section>
-
-    <section>
-      <h2>WordPress.org (planned)</h2>
-      <p>
-        This plugin is GPL-licensed and ships a directory-ready <code>readme.txt</code>.
-        After review on WordPress.org, that becomes the update source; GitHub remains the public home for source and docs.
-      </p>
+      <h2>Updates</h2>
+      <ul>
+        <li>GitHub / direct ZIP → updates from GitHub Releases</li>
+        <li>WordPress.org install → updates from wordpress.org</li>
+      </ul>
     </section>
 
     <footer>

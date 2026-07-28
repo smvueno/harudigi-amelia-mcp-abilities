@@ -23,28 +23,35 @@ jobs:
           REF="${GITHUB_REF_NAME}"
           VER="${REF#v}"
           echo "version=$VER" >> "$GITHUB_OUTPUT"
-          echo "zip=harudigi-amelia-mcp-abilities-${VER}.zip" >> "$GITHUB_OUTPUT"
+          echo "zip=mcp-abilities-for-amelia-${VER}.zip" >> "$GITHUB_OUTPUT"
+          echo "zip_wporg=mcp-abilities-for-amelia-${VER}-wporg.zip" >> "$GITHUB_OUTPUT"
 
-      - name: Build plugin zip
+      - name: Build GitHub + WordPress.org zips
         run: |
-          mkdir -p dist/harudigi-amelia-mcp-abilities
-          rsync -a \
-            --exclude '.git' \
-            --exclude '.github' \
-            --exclude '.wordpress-org' \
-            --exclude 'docs' \
-            --exclude 'dist' \
-            --exclude '.gitignore' \
-            ./ dist/harudigi-amelia-mcp-abilities/
-          cd dist
-          zip -r "../${{ steps.ver.outputs.zip }}" harudigi-amelia-mcp-abilities
+          chmod +x scripts/build-zip.sh
+          ./scripts/build-zip.sh github
+          ./scripts/build-zip.sh wporg
+          cp "dist/${{ steps.ver.outputs.zip }}" .
+          cp "dist/${{ steps.ver.outputs.zip_wporg }}" .
 
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          files: ${{ steps.ver.outputs.zip }}
+          files: |
+            ${{ steps.ver.outputs.zip }}
+            ${{ steps.ver.outputs.zip_wporg }}
           fail_on_unmatched_files: true
           generate_release_notes: true
+          body: |
+            ## Install
+            - **GitHub / direct ZIP** (auto-updates from GitHub Releases): `${{ steps.ver.outputs.zip }}`
+            - **WordPress.org review/upload** (no GitHub updater): `${{ steps.ver.outputs.zip_wporg }}`
+
+            Plugin folder slug: `mcp-abilities-for-amelia`
+
+            Requires **Easy MCP AI** and **Amelia Booking 9.7+**.
+
+            Independent HaruDigi plugin — not affiliated with or endorsed by TMS Software.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

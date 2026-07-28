@@ -7,10 +7,10 @@
 
 namespace Harudigi_Amelia_MCP_Abilities;
 
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
-
 /**
  * Amelia payment gateway names (manual bookkeeping labels — does not charge cards).
  *
@@ -36,7 +36,7 @@ function payment_status_allowlist(): array {
 function normalize_payment_gateway( $raw ) {
 	$g = trim( (string) $raw );
 	if ( '' === $g ) {
-		return new \WP_Error( 'invalid_gateway', __( 'gateway is required.', 'harudigi-amelia-mcp-abilities' ) );
+		return new \WP_Error( 'invalid_gateway', __( 'gateway is required.', 'mcp-abilities-for-amelia' ) );
 	}
 
 	$allowed = payment_gateway_allowlist();
@@ -65,7 +65,7 @@ function normalize_payment_gateway( $raw ) {
 		'invalid_gateway',
 		sprintf(
 			/* translators: %s: comma-separated gateway names */
-			__( 'Unknown gateway. Use one of: %s (aliases: paypal, onsite, woocommerce). Setting gateway only records how payment was taken — it does not charge a card or send a payment link.', 'harudigi-amelia-mcp-abilities' ),
+			__( 'Unknown gateway. Use one of: %s (aliases: paypal, onsite, woocommerce). Setting gateway only records how payment was taken — it does not charge a card or send a payment link.', 'mcp-abilities-for-amelia' ),
 			implode( ', ', $allowed )
 		)
 	);
@@ -78,7 +78,7 @@ function normalize_payment_gateway( $raw ) {
 function normalize_payment_status( $raw ) {
 	$s = trim( (string) $raw );
 	if ( '' === $s ) {
-		return new \WP_Error( 'invalid_status', __( 'status is required.', 'harudigi-amelia-mcp-abilities' ) );
+		return new \WP_Error( 'invalid_status', __( 'status is required.', 'mcp-abilities-for-amelia' ) );
 	}
 
 	$allowed = payment_status_allowlist();
@@ -105,7 +105,7 @@ function normalize_payment_status( $raw ) {
 		'invalid_status',
 		sprintf(
 			/* translators: %s: comma-separated statuses */
-			__( 'Unknown payment status. Use one of: %s.', 'harudigi-amelia-mcp-abilities' ),
+			__( 'Unknown payment status. Use one of: %s.', 'mcp-abilities-for-amelia' ),
 			implode( ', ', $allowed )
 		)
 	);
@@ -255,7 +255,7 @@ function build_add_payment_body( array $input ) {
 	if ( $booking_id <= 0 && $package_id <= 0 ) {
 		return new \WP_Error(
 			'invalid_fields',
-			__( 'customerBookingId (or booking_id) or packageCustomerId is required.', 'harudigi-amelia-mcp-abilities' )
+			__( 'customerBookingId (or booking_id) or packageCustomerId is required.', 'mcp-abilities-for-amelia' )
 		);
 	}
 
@@ -319,7 +319,7 @@ function payment_link_reservation_data( $payment ) {
 		: ( is_array( $reservation_result ) ? $reservation_result : null );
 
 	if ( ! is_array( $reservation ) ) {
-		return new \WP_Error( 'reservation_missing', __( 'Could not load booking for this payment.', 'harudigi-amelia-mcp-abilities' ) );
+		return new \WP_Error( 'reservation_missing', __( 'Could not load booking for this payment.', 'mcp-abilities-for-amelia' ) );
 	}
 
 	$data = array(
@@ -367,7 +367,7 @@ function generate_payment_link( int $payment_id, string $gateway ) {
 	if ( 'onSite' === $gateway ) {
 		return new \WP_Error(
 			'invalid_gateway',
-			__( 'Payment links require an online gateway (stripe, payPal, …), not onSite.', 'harudigi-amelia-mcp-abilities' )
+			__( 'Payment links require an online gateway (stripe, payPal, …), not onSite.', 'mcp-abilities-for-amelia' )
 		);
 	}
 
@@ -380,14 +380,14 @@ function generate_payment_link( int $payment_id, string $gateway ) {
 	$payment_repo = $container->get( 'domain.payment.repository' );
 	$payment      = $payment_repo->getById( $payment_id );
 	if ( ! $payment ) {
-		return new \WP_Error( 'payment_missing', __( 'Payment not found.', 'harudigi-amelia-mcp-abilities' ) );
+		return new \WP_Error( 'payment_missing', __( 'Payment not found.', 'mcp-abilities-for-amelia' ) );
 	}
 
 	$status = $payment->getStatus() ? $payment->getStatus()->getValue() : '';
 	if ( 'paid' === $status ) {
 		return new \WP_Error(
 			'payment_done',
-			__( 'This payment is already fully paid — no payment link.', 'harudigi-amelia-mcp-abilities' )
+			__( 'This payment is already fully paid — no payment link.', 'mcp-abilities-for-amelia' )
 		);
 	}
 
@@ -398,7 +398,7 @@ function generate_payment_link( int $payment_id, string $gateway ) {
 	if ( empty( $plink['enabled'] ) ) {
 		return new \WP_Error(
 			'payment_links_disabled',
-			__( 'Enable Amelia → Settings → Payments → Pay with payment link first.', 'harudigi-amelia-mcp-abilities' )
+			__( 'Enable Amelia → Settings → Payments → Pay with payment link first.', 'mcp-abilities-for-amelia' )
 		);
 	}
 
@@ -421,13 +421,13 @@ function generate_payment_link( int $payment_id, string $gateway ) {
 	if ( null === $payment_links ) {
 		return new \WP_Error(
 			'payment_done',
-			__( 'No balance due on this booking (already covered).', 'harudigi-amelia-mcp-abilities' )
+			__( 'No balance due on this booking (already covered).', 'mcp-abilities-for-amelia' )
 		);
 	}
 	if ( ! is_array( $payment_links ) || array() === $payment_links ) {
 		return new \WP_Error(
 			'payment_link_failed',
-			__( 'Could not create payment link. Check Payment Links are enabled and the booking is not canceled.', 'harudigi-amelia-mcp-abilities' )
+			__( 'Could not create payment link. Check Payment Links are enabled and the booking is not canceled.', 'mcp-abilities-for-amelia' )
 		);
 	}
 	if ( ! empty( $payment_links['payment_link_error_message'] ) ) {
@@ -446,7 +446,7 @@ function generate_payment_link( int $payment_id, string $gateway ) {
 		$url   = isset( $first[0] ) && is_string( $first[0] ) ? $first[0] : '';
 	}
 	if ( '' === $url ) {
-		return new \WP_Error( 'payment_link_failed', __( 'Payment link was empty.', 'harudigi-amelia-mcp-abilities' ) );
+		return new \WP_Error( 'payment_link_failed', __( 'Payment link was empty.', 'mcp-abilities-for-amelia' ) );
 	}
 
 	$payments_cfg = (array) $settings->getCategorySettings( 'payments' );
@@ -461,10 +461,10 @@ function generate_payment_link( int $payment_id, string $gateway ) {
 		'auto_approve' => ! empty( $plink['changeBookingStatus'] ),
 		'gateway_enabled' => $gw_enabled,
 		'note'         => $gw_enabled
-			? __( 'Copy paymentLink to the client. Charges the remaining balance (not a custom half amount). After they pay, Amelia updates finance; auto-approve depends on Payment Links settings.', 'harudigi-amelia-mcp-abilities' )
+			? __( 'Copy paymentLink to the client. Charges the remaining balance (not a custom half amount). After they pay, Amelia updates finance; auto-approve depends on Payment Links settings.', 'mcp-abilities-for-amelia' )
 			: sprintf(
 				/* translators: %s: gateway name */
-				__( 'Link generated, but %s is not enabled in Amelia Payments — enable and configure it before the client can pay.', 'harudigi-amelia-mcp-abilities' ),
+				__( 'Link generated, but %s is not enabled in Amelia Payments — enable and configure it before the client can pay.', 'mcp-abilities-for-amelia' ),
 				$gateway
 			),
 	);

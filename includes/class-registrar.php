@@ -7,10 +7,10 @@
 
 namespace Harudigi_Amelia_MCP_Abilities;
 
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
-
 final class Registrar {
 
 	public static function init(): void {
@@ -26,8 +26,8 @@ final class Registrar {
 		wp_register_ability_category(
 			'amelia-ops',
 			array(
-				'label'       => __( 'Amelia Ops', 'harudigi-amelia-mcp-abilities' ),
-				'description' => __( 'Admin control beyond Amelia Pro MCP (catalog, payments, settings).', 'harudigi-amelia-mcp-abilities' ),
+				'label'       => __( 'Amelia Ops', 'mcp-abilities-for-amelia' ),
+				'description' => __( 'Admin control beyond Amelia Pro MCP (catalog, payments, settings).', 'mcp-abilities-for-amelia' ),
 			)
 		);
 	}

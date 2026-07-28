@@ -1,8 +1,8 @@
 # Contributing
 
-Thanks for helping improve **Amelia MCP Abilities - HaruDigi**.
+Thanks for helping improve **MCP Abilities for Amelia – HaruDigi**.
 
-[HaruDigi](https://harudigi.com) builds WordPress sites and tools so SMBs can get a proper website, stronger client reach, automations, and trust (including with AI systems). Contributions that keep that bar — safe, clear, maintainable — are welcome.
+[HaruDigi](https://harudigi.com) builds WordPress sites and tools for SMBs. This plugin is independent and **not affiliated with or endorsed by TMS Software**.
 
 ## Ground rules
 
@@ -10,21 +10,20 @@ Thanks for helping improve **Amelia MCP Abilities - HaruDigi**.
 2. Never expose payment/OAuth/SMTP secrets in ability output.
 3. Destructive actions must require `confirm=true`.
 4. Keep PHP files modular and under ~500 lines where practical.
-5. Match existing coding style (WordPress PHP conventions).
-6. In prose, the brand is **HaruDigi** (one word, camel case). Logo lettering may stay **HARUDIGI**.
+5. Match WordPress PHP conventions.
+6. Brand spelling in prose: **HaruDigi**. Logo lettering may stay **HARUDIGI**.
+7. Public title/slug must stay trademark-safe: **MCP Abilities for Amelia – HaruDigi** / `mcp-abilities-for-amelia` (never start the name or slug with “Amelia”).
+8. Document **Amelia Booking 9.7+** as the minimum Amelia version.
 
-## Development
+## Builds
 
-1. Fork and clone this repo.
-2. Symlink or bind-mount into a WordPress install with Easy MCP AI (+ Amelia Booking for runtime tests).
-3. Make a focused change; open a PR against `main`.
+```bash
+./scripts/build-zip.sh        # GitHub ZIP (with updater)
+./scripts/build-zip.sh wporg  # WordPress.org ZIP (no updater / Update URI)
+```
 
 ## Releases
 
-Maintainers tag `vX.Y.Z`. GitHub Actions builds `harudigi-amelia-mcp-abilities-X.Y.Z.zip` and attaches it to the Release (required for in-dashboard updates).
-
-## Code of conduct
-
-Be respectful. Harassment or spam will be removed.
+Tag `vX.Y.Z`. CI attaches both ZIPs to the GitHub Release.
 
 — Jens Madsen · HaruDigi · https://harudigi.com
