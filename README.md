@@ -1,5 +1,7 @@
 # Haru Digi Amelia MCP Abilities
 
+![Haru Digi Amelia MCP Abilities](docs/banner.png)
+
 **Give AI agents full, safe control of Amelia Booking on WordPress.**  
 Built by [Haru Digi](https://harudigi.com) — websites, reach, automations, and trust for SMBs.
 
