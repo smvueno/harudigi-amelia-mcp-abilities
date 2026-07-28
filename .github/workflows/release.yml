@@ -1,0 +1,49 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  zip:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve version
+        id: ver
+        run: |
+          REF="${GITHUB_REF_NAME}"
+          VER="${REF#v}"
+          echo "version=$VER" >> "$GITHUB_OUTPUT"
+          echo "zip=harudigi-amelia-mcp-abilities-${VER}.zip" >> "$GITHUB_OUTPUT"
+
+      - name: Build plugin zip
+        run: |
+          mkdir -p dist/harudigi-amelia-mcp-abilities
+          rsync -a \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude 'docs' \
+            --exclude 'dist' \
+            --exclude '.gitignore' \
+            ./ dist/harudigi-amelia-mcp-abilities/
+          cd dist
+          zip -r "../${{ steps.ver.outputs.zip }}" harudigi-amelia-mcp-abilities
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: ${{ steps.ver.outputs.zip }}
+          fail_on_unmatched_files: true
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

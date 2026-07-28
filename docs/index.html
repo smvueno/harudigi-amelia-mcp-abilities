@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Haru Digi Amelia MCP Abilities — AI-ready Amelia Booking for WordPress</title>
+  <meta name="description" content="Haru Digi Amelia MCP Abilities extends Amelia Booking with safe MCP tools for AI agents. Built by Haru Digi for SMBs that need a proper website, stronger reach, automations, and trust." />
+  <meta name="author" content="Jens Madsen, Haru Digi" />
+  <link rel="canonical" href="https://smvueno.github.io/harudigi-amelia-mcp-abilities/" />
+  <meta property="og:title" content="Haru Digi Amelia MCP Abilities" />
+  <meta property="og:description" content="Full Amelia Booking control for AI agents via WordPress Abilities / Easy MCP AI. By Haru Digi." />
+  <meta property="og:url" content="https://smvueno.github.io/harudigi-amelia-mcp-abilities/" />
+  <meta property="og:type" content="website" />
+  <meta name="theme-color" content="#0c4a3e" />
+  <style>
+    :root {
+      --ink: #14221f;
+      --muted: #3d524c;
+      --brand: #0c4a3e;
+      --accent: #c45c26;
+      --paper: #f3f0e8;
+      --card: #fffdf8;
+      --line: rgba(20, 34, 31, 0.12);
+      --max: 42rem;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse 80% 50% at 10% -10%, rgba(12, 74, 62, 0.18), transparent 55%),
+        radial-gradient(ellipse 60% 40% at 100% 0%, rgba(196, 92, 38, 0.14), transparent 50%),
+        linear-gradient(180deg, #e8efe9 0%, var(--paper) 40%, #ebe6da 100%);
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+    a { color: var(--brand); }
+    a:hover { color: var(--accent); }
+    .wrap { max-width: var(--max); margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+    .brand {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-size: 0.8rem;
+      color: var(--brand);
+      margin: 0 0 0.75rem;
+    }
+    h1 {
+      font-size: clamp(1.85rem, 4vw, 2.45rem);
+      line-height: 1.15;
+      margin: 0 0 0.75rem;
+      font-weight: 700;
+    }
+    .lede { font-size: 1.15rem; color: var(--muted); margin: 0 0 1.75rem; }
+    .cta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 2.5rem;
+    }
+    .btn {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      padding: 0.7rem 1.1rem;
+      border-radius: 4px;
+      border: 1px solid transparent;
+    }
+    .btn-primary { background: var(--brand); color: #f7faf8; }
+    .btn-primary:hover { background: #08362d; color: #fff; }
+    .btn-ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+    section {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 1.25rem 1.35rem;
+      margin-bottom: 1rem;
+    }
+    section h2 {
+      font-size: 1.15rem;
+      margin: 0 0 0.5rem;
+    }
+    section p, section li { color: var(--muted); margin: 0 0 0.5rem; }
+    section ul { margin: 0.35rem 0 0; padding-left: 1.2rem; }
+    footer {
+      margin-top: 2rem;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    footer strong { color: var(--ink); }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <p class="brand"><a href="https://harudigi.com">Haru Digi</a></p>
+    <h1>Amelia MCP Abilities</h1>
+    <p class="lede">
+      Full Amelia Booking control for AI agents on WordPress — catalog, bookings, payments, and settings — without exposing secrets.
+    </p>
+    <div class="cta">
+      <a class="btn btn-primary" href="https://github.com/smvueno/harudigi-amelia-mcp-abilities/releases">Download latest release</a>
+      <a class="btn btn-ghost" href="https://github.com/smvueno/harudigi-amelia-mcp-abilities">View source on GitHub</a>
+      <a class="btn btn-ghost" href="https://harudigi.com">Visit harudigi.com</a>
+    </div>
+
+    <section>
+      <h2>Built for SMBs that want AI-ready ops</h2>
+      <p>
+        <strong>Haru Digi</strong> helps small and mid-sized businesses get a proper website,
+        stronger reach to clients, practical automations, and trust — with customers and with AI engines.
+        <em>Haru</em> means new beginning and spring; <em>Digi</em> means digital.
+      </p>
+      <p>Author: <strong>Jens Madsen</strong> · Brand: <strong>Haru Digi</strong></p>
+    </section>
+
+    <section>
+      <h2>What the plugin does</h2>
+      <ul>
+        <li>Extends Amelia’s built-in MCP abilities (does not duplicate core tools)</li>
+        <li>Adds catalog, booking, payment, and settings abilities for Easy MCP AI</li>
+        <li>Redacts secrets; blocks unsafe password / externalId writes</li>
+        <li>Requires explicit confirmation for destructive deletes</li>
+        <li>Updates from public GitHub Releases via WordPress’ native Update URI flow</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Install in minutes</h2>
+      <ol>
+        <li>Install &amp; activate Amelia Booking</li>
+        <li>Upload the release ZIP (folder must be <code>harudigi-amelia-mcp-abilities</code>)</li>
+        <li>Activate the plugin; enable abilities in Easy MCP AI</li>
+        <li>Optional: turn on auto-updates in Plugins</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>WordPress.org (planned)</h2>
+      <p>
+        This plugin is GPL-licensed and ships a directory-ready <code>readme.txt</code>.
+        After review on WordPress.org, that becomes the update source; GitHub remains the public home for source and docs.
+      </p>
+    </section>
+
+    <footer>
+      <p>
+        <strong>Haru Digi</strong> — websites, reach, automations, and trust for SMBs.<br />
+        <a href="https://harudigi.com">harudigi.com</a>
+        · <a href="https://github.com/smvueno/harudigi-amelia-mcp-abilities">GitHub</a>
+        · <a href="https://github.com/smvueno/harudigi-amelia-mcp-abilities/blob/main/SECURITY.md">Security</a>
+      </p>
+    </footer>
+  </main>
+</body>
+</html>
