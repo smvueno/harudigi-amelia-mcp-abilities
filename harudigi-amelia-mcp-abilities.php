@@ -3,7 +3,7 @@
  * Plugin Name:       Amelia MCP Abilities - HaruDigi
  * Plugin URI:        https://smvueno.github.io/harudigi-amelia-mcp-abilities/
  * Description:       Adds Amelia Booking admin abilities to Easy MCP AI (catalog, bookings, payments, settings). Built by HaruDigi for SMBs that want AI-ready WordPress operations.
- * Version:           1.5.2
+ * Version:           1.5.3
  * Requires at least: 6.9
  * Requires PHP:      7.4
  * Requires Plugins:  easy-mcp-ai
@@ -29,7 +29,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'HARUDIGI_AMELIA_MCP_VERSION', '1.5.2' );
+define( 'HARUDIGI_AMELIA_MCP_VERSION', '1.5.3' );
 define( 'HARUDIGI_AMELIA_MCP_FILE', __FILE__ );
 define( 'HARUDIGI_AMELIA_MCP_DIR', plugin_dir_path( __FILE__ ) );
 

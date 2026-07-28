@@ -109,7 +109,7 @@ final class GitHub_Updater {
 	 *
 	 * @return array<string,string>|false
 	 */
-	private static function update_payload( string $_installed_version ) {
+	private static function update_payload() {
 		$release = self::latest_release();
 		if ( ! $release ) {
 			return false;
