@@ -2,7 +2,9 @@
 
 ![MCP Abilities for Amelia – HaruDigi](docs/banner.png)
 
-**Give Easy MCP AI full, safe Amelia Booking abilities on WordPress.**  
+**Give Easy MCP AI the missing Amelia admin surface on WordPress.**  
+This plugin adds about 90 Amelia abilities for catalog, bookings, payments, settings, and maintenance while keeping Amelia's native abilities intact.
+
 Built by [HaruDigi](https://harudigi.com) — websites, reach, automations, and trust for SMBs.
 
 > **Independent plugin.** MCP Abilities for Amelia is built by HaruDigi and is **not affiliated with or endorsed by TMS Software** (Amelia Booking).
@@ -16,6 +18,17 @@ Built by [HaruDigi](https://harudigi.com) — websites, reach, automations, and 
 **Install slug:** `mcp-abilities-for-amelia`
 
 ---
+
+## What it does
+
+- Adds the missing Amelia admin MCP surface for Easy MCP AI
+- Covers services, categories, locations, employees, appointments, events, customers, resources, coupons, custom fields, payments, and more
+- Keeps Amelia core abilities intact instead of duplicating them
+- Redacts secrets and blocks unsafe fields where needed
+- Requires confirmation for destructive deletes
+- Ships two distribution modes:
+  - GitHub ZIP with updater
+  - WordPress.org ZIP without GitHub updater
 
 ## Requirements
 
@@ -44,6 +57,12 @@ If you still have `amelia-mcp-abilities` or `harudigi-amelia-mcp-abilities`, dea
 |-------------------|--------------|
 | GitHub / direct ZIP | Public GitHub Releases (Update URI + updater in that ZIP) |
 | WordPress.org | wordpress.org only (wporg ZIP has no GitHub updater) |
+
+## Repository assets
+
+- GitHub banner preview: `docs/banner.png`
+- GitHub icon: `docs/icon.png`
+- WordPress.org banner + icon set: `.wordpress-org/`
 
 ## License
 
