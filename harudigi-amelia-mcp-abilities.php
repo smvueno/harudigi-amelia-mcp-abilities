@@ -1,25 +1,25 @@
 <?php
 /**
- * Plugin Name:       Haru Digi Amelia MCP Abilities
+ * Plugin Name:       Amelia MCP Abilities - HaruDigi
  * Plugin URI:        https://smvueno.github.io/harudigi-amelia-mcp-abilities/
- * Description:       Extends Amelia Booking MCP abilities with full admin control for Easy MCP AI (catalog, bookings, payments, settings). Built by Haru Digi for SMBs that want AI-ready WordPress operations.
- * Version:           1.5.0
+ * Description:       Adds Amelia Booking admin abilities to Easy MCP AI (catalog, bookings, payments, settings). Built by HaruDigi for SMBs that want AI-ready WordPress operations.
+ * Version:           1.5.1
  * Requires at least: 6.9
  * Requires PHP:      7.4
- * Requires Plugins:  ameliabooking
- * Author:            Jens Madsen · Haru Digi
+ * Requires Plugins:  easy-mcp-ai
+ * Author:            Jens Madsen · HaruDigi
  * Author URI:        https://harudigi.com
  * Update URI:        https://github.com/smvueno/harudigi-amelia-mcp-abilities
  * Text Domain:       harudigi-amelia-mcp-abilities
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  *
- * Haru Digi (“Haru” = new beginning / spring, “Digi” = digital) helps SMBs get a proper
+ * HaruDigi (“Haru” = new beginning / spring, “Digi” = digital) helps SMBs get a proper
  * website, stronger reach, automations, and trust with clients and AI engines.
  *
- * Amelia Pro already registers: list-services/employees/customers/events/appointments,
- * check-availability, add-service/customer, create-appointment/event, book-event, cancel-booking.
- * This plugin fills the gaps. Secrets stay redacted. Destructive deletes need confirm=true.
+ * This plugin exposes extra Amelia abilities to Easy MCP AI. Amelia Booking should be
+ * active for those abilities to run. Amelia Pro already registers core MCP abilities;
+ * this plugin fills the gaps. Secrets stay redacted. Destructive deletes need confirm=true.
  * Password/externalId writes are blocked.
  *
  * @package Harudigi_Amelia_MCP_Abilities
@@ -29,7 +29,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'HARUDIGI_AMELIA_MCP_VERSION', '1.5.0' );
+define( 'HARUDIGI_AMELIA_MCP_VERSION', '1.5.1' );
 define( 'HARUDIGI_AMELIA_MCP_FILE', __FILE__ );
 define( 'HARUDIGI_AMELIA_MCP_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -184,6 +184,26 @@ function amelia_mcp_maybe_sync_easy_mcp(): void {
 	amelia_mcp_enable_in_easy_mcp();
 }
 
+/**
+ * @param string $message Notice text.
+ * @param string $type    notice-error|notice-warning.
+ */
+function harudigi_amelia_mcp_admin_notice( string $message, string $type = 'notice-warning' ): void {
+	add_action(
+		'admin_notices',
+		static function () use ( $message, $type ): void {
+			if ( ! current_user_can( 'activate_plugins' ) ) {
+				return;
+			}
+			printf(
+				'<div class="notice %1$s"><p>%2$s</p></div>',
+				esc_attr( $type ),
+				esc_html( $message )
+			);
+		}
+	);
+}
+
 register_activation_hook( __FILE__, 'amelia_mcp_enable_in_easy_mcp' );
 
 add_action(
@@ -191,17 +211,19 @@ add_action(
 	static function (): void {
 		Harudigi_Amelia_MCP_Abilities\GitHub_Updater::init();
 
+		if ( ! defined( 'EASY_MCP_AI_VERSION' ) ) {
+			harudigi_amelia_mcp_admin_notice(
+				__( 'Amelia MCP Abilities - HaruDigi requires Easy MCP AI to be active.', 'harudigi-amelia-mcp-abilities' ),
+				'notice-error'
+			);
+			return;
+		}
+
+		// Amelia powers the abilities; Easy MCP AI is the required host.
 		if ( ! defined( 'AMELIA_PATH' ) || ! defined( 'AMELIA_VERSION' ) ) {
-			add_action(
-				'admin_notices',
-				static function (): void {
-					if ( ! current_user_can( 'activate_plugins' ) ) {
-						return;
-					}
-					echo '<div class="notice notice-warning"><p>';
-					echo esc_html__( 'Haru Digi Amelia MCP Abilities requires Amelia Booking to be active.', 'harudigi-amelia-mcp-abilities' );
-					echo '</p></div>';
-				}
+			harudigi_amelia_mcp_admin_notice(
+				__( 'Amelia MCP Abilities - HaruDigi is active, but Amelia Booking is not. Install/activate Amelia to use these abilities in Easy MCP AI.', 'harudigi-amelia-mcp-abilities' ),
+				'notice-warning'
 			);
 			return;
 		}

@@ -116,7 +116,7 @@ final class GitHub_Updater {
 			'https://api.github.com/repos/' . self::REPO . '/releases/latest',
 			array(
 				'timeout'    => 15,
-				'user-agent' => 'HaruDigi-Amelia-MCP/' . HARUDIGI_AMELIA_MCP_VERSION . '; ' . home_url( '/' ),
+				'user-agent' => 'HaruDigi-Amelia-MCP-Abilities/' . HARUDIGI_AMELIA_MCP_VERSION . '; ' . home_url( '/' ),
 				'headers'    => array(
 					'Accept' => 'application/vnd.github+json',
 				),

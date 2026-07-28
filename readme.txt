@@ -1,20 +1,22 @@
-=== Haru Digi Amelia MCP Abilities ===
+=== Amelia MCP Abilities - HaruDigi ===
 Contributors: jensmadsen, harudigi
 Tags: amelia, booking, mcp, ai, abilities, wordpress-abilities, easy-mcp
 Requires at least: 6.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.5.0
+Stable tag: 1.5.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Extend Amelia Booking with full MCP abilities for AI agents. Built by Haru Digi for SMBs.
+Extra Amelia Booking abilities for Easy MCP AI. Built by HaruDigi for SMBs.
 
 == Description ==
 
-**Haru Digi Amelia MCP Abilities** fills the gaps in Amelia Booking’s built-in MCP tools so AI agents (via Easy MCP AI and the WordPress Abilities API) can manage catalog, bookings, payments, and settings safely.
+**Amelia MCP Abilities - HaruDigi** adds gap-filler Amelia Booking abilities so AI agents (via Easy MCP AI and the WordPress Abilities API) can manage catalog, bookings, payments, and settings safely.
 
-[Haru Digi](https://harudigi.com) helps small and mid-sized businesses get a proper website, stronger reach to clients, practical automations, and trust — with people and with AI engines. *Haru* means new beginning and spring; *Digi* means digital.
+This plugin exists to give **Easy MCP AI** more tools. Amelia Booking should be installed for those abilities to run; it is not a hard WordPress dependency of this plugin.
+
+[HaruDigi](https://harudigi.com) helps small and mid-sized businesses get a proper website, stronger reach to clients, practical automations, and trust — with people and with AI engines. *Haru* means new beginning and spring; *Digi* means digital.
 
 = What this plugin does =
 
@@ -29,10 +31,10 @@ Extend Amelia Booking with full MCP abilities for AI agents. Built by Haru Digi 
 
 * WordPress 6.9+
 * PHP 7.4+
-* [Amelia Booking](https://wpamelia.com/) active
-* Easy MCP AI (or another Abilities/MCP bridge) recommended
+* [Easy MCP AI](https://wordpress.org/plugins/easy-mcp-ai/) active (required)
+* Amelia Booking recommended (abilities call Amelia when present)
 
-= About Haru Digi =
+= About HaruDigi =
 
 We build WordPress sites and tooling so SMBs can:
 
@@ -41,24 +43,29 @@ We build WordPress sites and tooling so SMBs can:
 * Automate ops without losing control
 * Earn trust from customers and modern AI discovery systems
 
-Author: **Jens Madsen** · Brand: **Haru Digi** · [harudigi.com](https://harudigi.com)
+Author: **Jens Madsen** · Brand: **HaruDigi** · [harudigi.com](https://harudigi.com)
 
 Project site: https://smvueno.github.io/harudigi-amelia-mcp-abilities/
 Source: https://github.com/smvueno/harudigi-amelia-mcp-abilities
 
 == Installation ==
 
-1. Upload the `harudigi-amelia-mcp-abilities` folder to `/wp-content/plugins/`, or install the release ZIP.
-2. Activate **Haru Digi Amelia MCP Abilities**.
-3. Ensure Amelia Booking is active.
-4. In Easy MCP AI, confirm Amelia abilities are enabled (the plugin merges new slugs on activation / version bump).
-5. Optional: enable auto-updates for this plugin in **Plugins** (updates come from GitHub Releases until listed on WordPress.org).
+1. Install and activate **Easy MCP AI**.
+2. Upload the `harudigi-amelia-mcp-abilities` folder to `/wp-content/plugins/`, or install the release ZIP.
+3. Activate **Amelia MCP Abilities - HaruDigi**.
+4. Install/activate Amelia Booking so the abilities have something to talk to.
+5. In Easy MCP AI, confirm Amelia abilities are enabled (the plugin merges new slugs on activation / version bump).
+6. Optional: enable auto-updates for this plugin in **Plugins** (updates come from GitHub Releases until listed on WordPress.org).
 
 == Frequently Asked Questions ==
 
 = Does this replace Amelia’s MCP tools? =
 
-No. It extends them. Amelia Pro’s native abilities stay registered; this plugin adds the missing admin surface.
+No. It extends them for Easy MCP AI. Amelia Pro’s native abilities stay registered; this plugin adds the missing admin surface.
+
+= Why does it require Easy MCP AI instead of Amelia? =
+
+Easy MCP AI is the MCP host that exposes abilities to your AI tools. This plugin only adds more abilities to that host. Amelia Booking is what those abilities operate on — keep it active for full use.
 
 = Will updates work from GitHub? =
 
@@ -66,12 +73,17 @@ Yes, while the plugin is distributed from GitHub. WordPress uses the `Update URI
 
 = Is this affiliated with Amelia? =
 
-No. This is an independent Haru Digi plugin that integrates with Amelia Booking.
+No. This is an independent HaruDigi plugin that integrates with Amelia Booking and Easy MCP AI.
 
 == Changelog ==
 
+= 1.5.1 =
+* Brand name standardized to HaruDigi
+* Plugin title: Amelia MCP Abilities - HaruDigi (sorts with Amelia)
+* Requires Easy MCP AI (Amelia is recommended, not a hard dependency)
+
 = 1.5.0 =
-* Public Haru Digi branded release (`harudigi-amelia-mcp-abilities`)
+* Public HaruDigi branded release (`harudigi-amelia-mcp-abilities`)
 * GitHub Releases auto-update via native `Update URI` filter
 * Docs site and wp.org-ready readme.txt
 
@@ -86,5 +98,5 @@ No. This is an independent Haru Digi plugin that integrates with Amelia Booking.
 
 == Upgrade Notice ==
 
-= 1.5.0 =
-Folder and slug renamed to harudigi-amelia-mcp-abilities. Deactivate the old amelia-mcp-abilities plugin, install this one, then activate.
+= 1.5.1 =
+Requires Easy MCP AI. Plugin renamed to Amelia MCP Abilities - HaruDigi. Brand text uses HaruDigi.
