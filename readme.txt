@@ -77,6 +77,9 @@ No. This is an independent HaruDigi plugin that integrates with Amelia Booking a
 
 == Changelog ==
 
+= 1.5.3 =
+* Hotfix: GitHub updater fatal from 1.5.2
+
 = 1.5.2 =
 * More reliable GitHub update checks (Update URI + transient injection)
 * Fix failed-API cache so a temporary GitHub error does not block later checks
@@ -101,6 +104,9 @@ No. This is an independent HaruDigi plugin that integrates with Amelia Booking a
 * Payment add/update/delete abilities; optional payment on create booking
 
 == Upgrade Notice ==
+
+= 1.5.3 =
+Hotfix for GitHub updater. Re-upload this ZIP if you installed 1.5.2 and hit a critical error on Updates.
 
 = 1.5.2 =
 Improves GitHub → WordPress update detection. If you are on 1.5.0/1.5.1, use Dashboard → Updates → Check again.
