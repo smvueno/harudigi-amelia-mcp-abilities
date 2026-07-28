@@ -1,9 +1,9 @@
 <?php
 /**
- * Native WordPress updates from public GitHub Releases (Update URI + update_plugins_github.com).
+ * Native WordPress updates from public GitHub Releases.
  *
- * When this plugin is later hosted on WordPress.org, remove or gate this class so
- * wordpress.org remains the sole update source.
+ * Uses Update URI (update_plugins_github.com) plus a transient fallback so
+ * updates still appear if the hostname filter is skipped.
  *
  * @package Harudigi_Amelia_MCP_Abilities
  */
@@ -16,19 +16,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class GitHub_Updater {
 
-	const REPO   = 'smvueno/harudigi-amelia-mcp-abilities';
-	const HOST   = 'github.com';
-	const CACHE  = 'harudigi_amelia_mcp_gh_release';
-	const TTL    = HOUR_IN_SECONDS * 6;
+	const REPO  = 'smvueno/harudigi-amelia-mcp-abilities';
+	const HOST  = 'github.com';
+	const CACHE = 'harudigi_amelia_mcp_gh_release';
+	const TTL   = HOUR_IN_SECONDS * 6;
+	const SLUG  = 'harudigi-amelia-mcp-abilities';
 
 	public static function init(): void {
-		// Bail if Update URI points at wordpress.org (future directory listing).
 		$update_uri = (string) ( get_file_data( HARUDIGI_AMELIA_MCP_FILE, array( 'UpdateURI' => 'Update URI' ), 'plugin' )['UpdateURI'] ?? '' );
 		if ( $update_uri && false !== stripos( $update_uri, 'wordpress.org' ) ) {
 			return;
 		}
 
 		add_filter( 'update_plugins_' . self::HOST, array( __CLASS__, 'check' ), 10, 4 );
+		add_filter( 'pre_set_site_transient_update_plugins', array( __CLASS__, 'inject_transient' ), 20 );
 		add_filter( 'upgrader_source_selection', array( __CLASS__, 'fix_source_dir' ), 10, 4 );
 	}
 
@@ -40,40 +41,113 @@ final class GitHub_Updater {
 	 * @return array|false
 	 */
 	public static function check( $update, $plugin_data, $plugin_file, $locales ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
+		if ( ! empty( $update ) ) {
+			return $update;
+		}
 		if ( plugin_basename( HARUDIGI_AMELIA_MCP_FILE ) !== $plugin_file ) {
 			return $update;
 		}
 
-		$release = self::latest_release();
-		if ( ! $release ) {
-			return $update;
+		$payload = self::update_payload();
+		return $payload ? $payload : $update;
+	}
+
+	/**
+	 * Fallback: inject into the update transient (covers hosts that skip Update URI).
+	 *
+	 * @param object|mixed $transient Update transient.
+	 * @return object|mixed
+	 */
+	public static function inject_transient( $transient ) {
+		if ( ! is_object( $transient ) ) {
+			return $transient;
+		}
+		if ( ! isset( $transient->response ) || ! is_array( $transient->response ) ) {
+			$transient->response = array();
+		}
+		if ( ! isset( $transient->no_update ) || ! is_array( $transient->no_update ) ) {
+			$transient->no_update = array();
 		}
 
-		$new_version = ltrim( (string) ( $release['tag_name'] ?? '' ), 'vV' );
-		if ( '' === $new_version || ! version_compare( $new_version, HARUDIGI_AMELIA_MCP_VERSION, '>' ) ) {
-			return $update;
+		$plugin_file = plugin_basename( HARUDIGI_AMELIA_MCP_FILE );
+		$installed   = HARUDIGI_AMELIA_MCP_VERSION;
+		if ( function_exists( 'get_plugin_data' ) ) {
+			$data = get_plugin_data( HARUDIGI_AMELIA_MCP_FILE, false, false );
+			if ( ! empty( $data['Version'] ) ) {
+				$installed = (string) $data['Version'];
+			}
+		}
+
+		$payload = self::update_payload();
+		if ( ! $payload ) {
+			return $transient;
+		}
+
+		$item = (object) array_merge(
+			$payload,
+			array(
+				'id'          => 'https://github.com/' . self::REPO,
+				'plugin'      => $plugin_file,
+				'new_version' => $payload['version'],
+			)
+		);
+
+		unset( $transient->response[ $plugin_file ], $transient->no_update[ $plugin_file ] );
+
+		if ( version_compare( $payload['version'], $installed, '>' ) ) {
+			$transient->response[ $plugin_file ] = $item;
+		} else {
+			$transient->no_update[ $plugin_file ] = $item;
+		}
+
+		return $transient;
+	}
+
+	/**
+	 * Always return latest release metadata when GitHub is reachable.
+	 * WordPress decides response vs no_update via version_compare.
+	 *
+	 * @return array<string,string>|false
+	 */
+	private static function update_payload( string $_installed_version ) {
+		$release = self::latest_release();
+		if ( ! $release ) {
+			return false;
+		}
+
+		$new_version = self::normalize_version( (string) ( $release['tag_name'] ?? '' ) );
+		if ( '' === $new_version ) {
+			return false;
 		}
 
 		$package = self::zip_url( $release );
 		if ( ! $package ) {
-			return $update;
+			return false;
 		}
 
 		return array(
-			'slug'    => 'harudigi-amelia-mcp-abilities',
-			'version' => $new_version,
-			'url'     => 'https://github.com/' . self::REPO,
-			'package' => $package,
+			'slug'         => self::SLUG,
+			'version'      => $new_version,
+			'url'          => 'https://github.com/' . self::REPO,
+			'package'      => $package,
+			'tested'       => '6.9',
+			'requires_php' => '7.4',
 		);
 	}
 
+	private static function normalize_version( string $tag ): string {
+		$tag = trim( $tag );
+		if ( preg_match( '/^v?(\d+\.\d+(?:\.\d+)?(?:[.-].+)?)$/i', $tag, $m ) ) {
+			return $m[1];
+		}
+		return ltrim( $tag, "vV \t" );
+	}
+
 	/**
-	 * GitHub source zips extract as repo-tag/; ensure folder matches plugin slug.
-	 *
-	 * @param string      $source        Extracted source path.
-	 * @param string      $remote_source Remote source root.
-	 * @param \WP_Upgrader $upgrader     Upgrader instance.
-	 * @param array       $hook_extra    Hook context.
+	 * @param string       $source        Extracted source path.
+	 * @param string       $remote_source Remote source root.
+	 * @param \WP_Upgrader $upgrader      Upgrader instance.
+	 * @param array        $hook_extra    Hook context.
 	 * @return string|\WP_Error
 	 */
 	public static function fix_source_dir( $source, $remote_source, $upgrader, $hook_extra ) {
@@ -86,10 +160,10 @@ final class GitHub_Updater {
 			return $source;
 		}
 
-		$desired = trailingslashit( $remote_source ) . 'harudigi-amelia-mcp-abilities';
+		$desired = trailingslashit( $remote_source ) . self::SLUG;
 		$source  = untrailingslashit( $source );
 
-		if ( $source === $desired || basename( $source ) === 'harudigi-amelia-mcp-abilities' ) {
+		if ( $source === $desired || basename( $source ) === self::SLUG ) {
 			return trailingslashit( $source );
 		}
 
@@ -109,6 +183,9 @@ final class GitHub_Updater {
 	private static function latest_release(): ?array {
 		$cached = get_transient( self::CACHE );
 		if ( is_array( $cached ) ) {
+			if ( ! empty( $cached['_failed'] ) ) {
+				return null;
+			}
 			return $cached;
 		}
 
@@ -124,13 +201,13 @@ final class GitHub_Updater {
 		);
 
 		if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
-			set_transient( self::CACHE, array(), 15 * MINUTE_IN_SECONDS );
+			set_transient( self::CACHE, array( '_failed' => 1 ), 15 * MINUTE_IN_SECONDS );
 			return null;
 		}
 
 		$data = json_decode( (string) wp_remote_retrieve_body( $response ), true );
 		if ( ! is_array( $data ) || empty( $data['tag_name'] ) ) {
-			set_transient( self::CACHE, array(), 15 * MINUTE_IN_SECONDS );
+			set_transient( self::CACHE, array( '_failed' => 1 ), 15 * MINUTE_IN_SECONDS );
 			return null;
 		}
 
@@ -139,8 +216,6 @@ final class GitHub_Updater {
 	}
 
 	/**
-	 * Prefer attached release asset zip; fall back to GitHub source archive.
-	 *
 	 * @param array<string,mixed> $release Release payload.
 	 */
 	private static function zip_url( array $release ): string {

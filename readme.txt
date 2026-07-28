@@ -4,7 +4,7 @@ Tags: amelia, booking, mcp, ai, abilities, wordpress-abilities, easy-mcp
 Requires at least: 6.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.5.1
+Stable tag: 1.5.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -77,6 +77,10 @@ No. This is an independent HaruDigi plugin that integrates with Amelia Booking a
 
 == Changelog ==
 
+= 1.5.2 =
+* More reliable GitHub update checks (Update URI + transient injection)
+* Fix failed-API cache so a temporary GitHub error does not block later checks
+
 = 1.5.1 =
 * Brand name standardized to HaruDigi
 * Plugin title: Amelia MCP Abilities - HaruDigi (sorts with Amelia)
@@ -97,6 +101,9 @@ No. This is an independent HaruDigi plugin that integrates with Amelia Booking a
 * Payment add/update/delete abilities; optional payment on create booking
 
 == Upgrade Notice ==
+
+= 1.5.2 =
+Improves GitHub → WordPress update detection. If you are on 1.5.0/1.5.1, use Dashboard → Updates → Check again.
 
 = 1.5.1 =
 Requires Easy MCP AI. Plugin renamed to Amelia MCP Abilities - HaruDigi. Brand text uses HaruDigi.
