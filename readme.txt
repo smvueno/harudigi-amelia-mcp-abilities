@@ -4,7 +4,7 @@ Tags: amelia, booking, mcp, ai, abilities
 Requires at least: 6.9
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.7.3
+Stable tag: 1.7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -81,6 +81,9 @@ Easy MCP AI is the MCP host that exposes abilities to your AI tools. This plugin
 
 == Changelog ==
 
+= 1.7.4 =
+* Cache Amelia status counts; silence intentional Direct DB sniff for Plugin Check
+
 = 1.7.3 =
 * Limit readme tags to 5 (Plugin Check)
 * Prepare Amelia count queries with %i identifiers
@@ -117,6 +120,9 @@ Easy MCP AI is the MCP host that exposes abilities to your AI tools. This plugin
 * Public HaruDigi branded release
 
 == Upgrade Notice ==
+
+= 1.7.4 =
+Plugin Check clean (no ERROR/WARNING under correct slug). Upload *-wporg.zip for WordPress.org.
 
 = 1.7.3 =
 Plugin Check cleanups (tags, DB prepare). Upload *-wporg.zip for WordPress.org.
