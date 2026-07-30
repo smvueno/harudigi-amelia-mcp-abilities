@@ -50,6 +50,9 @@ function normalize_booking_extras( $raw, string $id_key = 'extraId' ): array {
 		if ( $booking_extra_id > 0 ) {
 			$row['id'] = $booking_extra_id;
 		}
+		if ( ! empty( $item['customerBookingId'] ) ) {
+			$row['customerBookingId'] = (int) $item['customerBookingId'];
+		}
 		if ( isset( $item['price'] ) && is_numeric( $item['price'] ) ) {
 			$row['price'] = (float) $item['price'];
 		}
@@ -429,7 +432,8 @@ function preserve_booking_extra_row_ids( array $incoming, array $existing ): arr
 	if ( empty( $incoming['extras'] ) || ! is_array( $incoming['extras'] ) ) {
 		return $incoming;
 	}
-	$by_extra = array();
+	$booking_id = (int) ( $incoming['id'] ?? $existing['id'] ?? 0 );
+	$by_extra   = array();
 	if ( ! empty( $existing['extras'] ) && is_array( $existing['extras'] ) ) {
 		foreach ( $existing['extras'] as $ex ) {
 			if ( ! is_array( $ex ) ) {
@@ -454,6 +458,10 @@ function preserve_booking_extra_row_ids( array $incoming, array $existing ): arr
 			$incoming['extras'][ $i ]['extraId']         = $eid;
 			$incoming['extras'][ $i ]['_bookingExtraId'] = $by_extra[ $eid ];
 			$incoming['extras'][ $i ]['id']              = $by_extra[ $eid ];
+			// Amelia's update() writes customerBookingId from the entity; omit it and the row is orphaned (id kept, booking link cleared).
+			if ( $booking_id > 0 ) {
+				$incoming['extras'][ $i ]['customerBookingId'] = $booking_id;
+			}
 		}
 	}
 	return $incoming;

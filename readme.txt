@@ -4,7 +4,7 @@ Tags: amelia, booking, mcp, ai, abilities, easy-mcp
 Requires at least: 6.9
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.7.1
+Stable tag: 1.7.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -81,6 +81,9 @@ Easy MCP AI is the MCP host that exposes abilities to your AI tools. This plugin
 
 == Changelog ==
 
+= 1.7.2 =
+* Fix update-appointment extras persistence (keep customerBookingId when updating existing extra rows)
+
 = 1.7.1 =
 * Redact Amelia cabinet JWT secrets and map/API keys in settings summary
 * Plain-English readme short description for Plugin Check
@@ -110,6 +113,9 @@ Easy MCP AI is the MCP host that exposes abilities to your AI tools. This plugin
 * Public HaruDigi branded release
 
 == Upgrade Notice ==
+
+= 1.7.2 =
+Fixes appointment extras being dropped on update. Use *-wporg.zip for WordPress.org.
 
 = 1.7.1 =
 Safer settings summary redaction. Upload *-wporg.zip for the WordPress.org review update.
