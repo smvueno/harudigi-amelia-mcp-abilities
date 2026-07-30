@@ -28,6 +28,9 @@ final class Helpers {
 		'envatotokenemail', 'smtppass', 'smtppassword', 'mailgunapikey', 'sendgridapikey',
 		'stripesecret', 'stripekey', 'paypalsecret', 'mollieapikey', 'razorpaykeysecret',
 		'squareaccesstoken', 'squarerefreshtoken', 'webhook_url', 'zoomapikey', 'zoomapisecret',
+		// Amelia cabinet / attachment JWT secrets (nested under roles.*).
+		'headerjwtsecret', 'urljwtsecret', 'jwtsecret', 'secret',
+		'gmapapikey', 'iplocateapikey',
 	);
 
 	/**
