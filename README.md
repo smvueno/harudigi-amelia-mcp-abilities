@@ -1,13 +1,13 @@
-# MCP Abilities for Amelia – HaruDigi
+# HaruDigi Booking Abilities for Amelia and Easy MCP AI
 
-![MCP Abilities for Amelia – HaruDigi](docs/banner.png)
+![HaruDigi Booking Abilities for Amelia and Easy MCP AI](docs/banner.png)
 
 **Give Easy MCP AI the missing Amelia admin surface on WordPress.**  
 This plugin adds about 90 Amelia abilities for catalog, bookings, payments, settings, and maintenance while keeping Amelia's native abilities intact.
 
 Built by [HaruDigi](https://harudigi.com) — websites, reach, automations, and trust for SMBs.
 
-> **Independent plugin.** MCP Abilities for Amelia is built by HaruDigi and is **not affiliated with or endorsed by TMS Software** (Amelia Booking).
+> **Independent plugin.** HaruDigi Booking Abilities for Amelia is built by HaruDigi and is **not affiliated with or endorsed by TMS Software** (Amelia Booking).
 
 [![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](LICENSE)
 [![WordPress](https://img.shields.io/badge/WordPress-6.9%2B-blue.svg)](https://wordpress.org/)
@@ -15,7 +15,7 @@ Built by [HaruDigi](https://harudigi.com) — websites, reach, automations, and 
 
 **Docs:** [smvueno.github.io/harudigi-amelia-mcp-abilities](https://smvueno.github.io/harudigi-amelia-mcp-abilities/)  
 **Author:** Jens Madsen · **Brand:** HaruDigi · **Site:** [harudigi.com](https://harudigi.com)  
-**Install slug:** `mcp-abilities-for-amelia`
+**Install slug:** `harudigi-booking-abilities-for-amelia`
 
 ---
 
@@ -43,13 +43,13 @@ Built by [HaruDigi](https://harudigi.com) — websites, reach, automations, and 
 
 1. Activate **Easy MCP AI** and **Amelia Booking 9.7+**.
 2. Download a release ZIP:
-   - **GitHub updates:** `mcp-abilities-for-amelia-x.y.z.zip`
-   - **WordPress.org submission:** `mcp-abilities-for-amelia-x.y.z-wporg.zip` (no GitHub updater)
-3. Upload / activate **MCP Abilities for Amelia – HaruDigi**.
+   - **GitHub updates:** `harudigi-booking-abilities-for-amelia-x.y.z.zip`
+   - **WordPress.org submission:** `harudigi-booking-abilities-for-amelia-x.y.z-wporg.zip` (no GitHub updater)
+3. Upload / activate **HaruDigi Booking Abilities for Amelia and Easy MCP AI**.
 
 ### Migrating from older folders
 
-If you still have `amelia-mcp-abilities` or `harudigi-amelia-mcp-abilities`, deactivate and delete that folder, then install `mcp-abilities-for-amelia`. Ability slugs (`amelia/*`) are unchanged.
+If you still have `mcp-abilities-for-amelia`, `amelia-mcp-abilities`, or `harudigi-amelia-mcp-abilities`, deactivate and delete that folder, then install `harudigi-booking-abilities-for-amelia`. Ability slugs (`amelia/*`) are unchanged.
 
 ## Updates
 

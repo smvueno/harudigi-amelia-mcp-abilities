@@ -132,7 +132,7 @@ function payment_row_from_get_result( $res ) {
 		return $res;
 	}
 	if ( ! is_array( $res ) ) {
-		return new \WP_Error( 'payment_missing', __( 'Payment not found.', 'mcp-abilities-for-amelia' ) );
+		return new \WP_Error( 'payment_missing', __( 'Payment not found.', 'harudigi-booking-abilities-for-amelia' ) );
 	}
 	if ( isset( $res['data']['payment'] ) && is_array( $res['data']['payment'] ) ) {
 		return $res['data']['payment'];
@@ -140,7 +140,7 @@ function payment_row_from_get_result( $res ) {
 	if ( isset( $res['payment'] ) && is_array( $res['payment'] ) ) {
 		return $res['payment'];
 	}
-	return new \WP_Error( 'payment_missing', __( 'Payment not found.', 'mcp-abilities-for-amelia' ) );
+	return new \WP_Error( 'payment_missing', __( 'Payment not found.', 'harudigi-booking-abilities-for-amelia' ) );
 }
 
 function ability_add_payment( array $i = array() ) {
@@ -175,7 +175,7 @@ function ability_update_payment( array $i = array() ) {
 		unset( $patch['payment_id'], $patch['confirm'], $patch['fields'] );
 	}
 	if ( ! $patch ) {
-		return new \WP_Error( 'invalid_fields', __( 'Provide gateway, status, amount, and/or transactionId to update.', 'mcp-abilities-for-amelia' ) );
+		return new \WP_Error( 'invalid_fields', __( 'Provide gateway, status, amount, and/or transactionId to update.', 'harudigi-booking-abilities-for-amelia' ) );
 	}
 
 	$body = merge_payment_update( $existing, $patch );
@@ -216,7 +216,7 @@ function ability_update_appointment( array $i = array() ) {
 	}
 	$existing = $existing_res['data']['appointment'] ?? ( $existing_res['appointment'] ?? $existing_res );
 	if ( ! is_array( $existing ) ) {
-		return new \WP_Error( 'amelia_not_found', __( 'Appointment not found.', 'mcp-abilities-for-amelia' ) );
+		return new \WP_Error( 'amelia_not_found', __( 'Appointment not found.', 'harudigi-booking-abilities-for-amelia' ) );
 	}
 
 	$fields                       = build_appointment_update_fields( $existing, $patch );
@@ -279,7 +279,7 @@ function ability_update_booking_status( array $i = array() ) {
 	}
 	$type = sanitize_key( (string) ( $i['type'] ?? 'appointment' ) );
 	if ( ! in_array( $type, array( 'appointment', 'event' ), true ) ) {
-		return new \WP_Error( 'invalid_type', __( 'type must be appointment or event.', 'mcp-abilities-for-amelia' ) );
+		return new \WP_Error( 'invalid_type', __( 'type must be appointment or event.', 'harudigi-booking-abilities-for-amelia' ) );
 	}
 	return Helpers::invoke(
 		UpdateBookingStatusController::class,

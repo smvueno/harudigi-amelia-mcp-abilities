@@ -2,13 +2,13 @@
 
 ## Supported versions
 
-Latest release of **MCP Abilities for Amelia – HaruDigi** (`mcp-abilities-for-amelia`) on GitHub Releases.
+Latest release of **HaruDigi Booking Abilities for Amelia and Easy MCP AI** (`harudigi-booking-abilities-for-amelia`) on GitHub Releases.
 
 ## Reporting a vulnerability
 
 Please **do not** open a public GitHub issue for security problems.
 
-Email: **hello@harudigi.com** (subject: `Security — mcp-abilities-for-amelia`)
+Email: **hello@harudigi.com** (subject: `Security — harudigi-booking-abilities-for-amelia`)
 
 Include plugin version, WordPress / PHP / Easy MCP AI / Amelia versions (Amelia must be 9.7+), steps to reproduce, and impact.
 

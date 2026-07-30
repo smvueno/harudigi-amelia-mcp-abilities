@@ -20,7 +20,7 @@ final class GitHub_Updater {
 	const HOST  = 'github.com';
 	const CACHE = 'harudigi_amelia_mcp_gh_release';
 	const TTL   = HOUR_IN_SECONDS * 6;
-	const SLUG  = 'mcp-abilities-for-amelia';
+	const SLUG  = 'harudigi-booking-abilities-for-amelia';
 
 	public static function init(): void {
 		$update_uri = (string) ( get_file_data( HARUDIGI_AMELIA_MCP_FILE, array( 'UpdateURI' => 'Update URI' ), 'plugin' )['UpdateURI'] ?? '' );
@@ -173,7 +173,7 @@ final class GitHub_Updater {
 
 		return new \WP_Error(
 			'harudigi_rename_failed',
-			__( 'Could not rename the GitHub plugin folder for install.', 'mcp-abilities-for-amelia' )
+			__( 'Could not rename the GitHub plugin folder for install.', 'harudigi-booking-abilities-for-amelia' )
 		);
 	}
 
@@ -226,7 +226,7 @@ final class GitHub_Updater {
 			}
 			$name = (string) ( $asset['name'] ?? '' );
 			$url  = (string) ( $asset['browser_download_url'] ?? '' );
-			if ( $url && preg_match( '/mcp-abilities-for-amelia.*\.zip$/i', $name ) ) {
+			if ( $url && preg_match( '/harudigi-booking-abilities-for-amelia.*\.zip$/i', $name ) ) {
 				return $url;
 			}
 		}

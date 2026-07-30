@@ -45,10 +45,10 @@ function patch_check_availability_ability(): void {
 	wp_register_ability(
 		'amelia/check-availability',
 		array(
-			'label'        => __( 'Check Availability', 'mcp-abilities-for-amelia' ),
+			'label'        => __( 'Check Availability', 'harudigi-booking-abilities-for-amelia' ),
 			'description'  => __(
 				'Free slots for a service. Requires serviceId. For duration pricing (1h/2h/3h), pass serviceDuration in seconds (3600/7200/10800). Optional extras: [{id, quantity}]. persons defaults to 1. Use amelia/get-service-booking-options first.',
-				'mcp-abilities-for-amelia'
+				'harudigi-booking-abilities-for-amelia'
 			),
 			'category'     => 'amelia-read',
 			'input_schema' => array(
@@ -104,10 +104,10 @@ function patch_add_customer_ability(): void {
 	wp_register_ability(
 		'amelia/add-customer',
 		array(
-			'label'       => __( 'Add Customer', 'mcp-abilities-for-amelia' ),
+			'label'       => __( 'Add Customer', 'harudigi-booking-abilities-for-amelia' ),
 			'description' => __(
 				'Create a customer. Matches Amelia admin: firstName required; lastName, email, phone, note optional. Do not invent fake emails — omit email or pass empty string when unknown.',
-				'mcp-abilities-for-amelia'
+				'harudigi-booking-abilities-for-amelia'
 			),
 			'category'    => 'amelia-write',
 			'input_schema' => array(
@@ -142,10 +142,10 @@ function patch_create_appointment_ability(): void {
 	wp_register_ability(
 		'amelia/create-appointment',
 		array(
-			'label'       => __( 'Create Appointment', 'mcp-abilities-for-amelia' ),
+			'label'       => __( 'Create Appointment', 'harudigi-booking-abilities-for-amelia' ),
 			'description' => __(
 				'Book an appointment. Confirm service, employee, customer, start time, and (when applicable) duration tier, extras, and custom fields. Optional paymentGateway (onSite|stripe|payPal|…) and paymentStatus/paymentAmount for the created payment row (manual label — does not charge). Use amelia/get-service-booking-options for duration_tiers. Pass duration in seconds. Pass extras as [{extraId, quantity}].',
-				'mcp-abilities-for-amelia'
+				'harudigi-booking-abilities-for-amelia'
 			),
 			'category'    => 'amelia-write',
 			'input_schema' => array(
@@ -219,10 +219,10 @@ function patch_book_event_ability(): void {
 	wp_register_ability(
 		'amelia/book-event',
 		array(
-			'label'       => __( 'Book Event', 'mcp-abilities-for-amelia' ),
+			'label'       => __( 'Book Event', 'harudigi-booking-abilities-for-amelia' ),
 			'description' => __(
 				'Register a customer on an event. Optional persons, customFields, and paymentGateway/paymentStatus (manual payment label).',
-				'mcp-abilities-for-amelia'
+				'harudigi-booking-abilities-for-amelia'
 			),
 			'category'    => 'amelia-write',
 			'input_schema' => array(
@@ -259,7 +259,7 @@ function ability_check_availability_patched( $input = array() ) {
 		'persons'   => isset( $input['persons'] ) ? max( 1, (int) $input['persons'] ) : 1,
 	);
 	if ( $params['serviceId'] <= 0 ) {
-		return new \WP_Error( 'invalid_serviceId', __( 'serviceId is required.', 'mcp-abilities-for-amelia' ) );
+		return new \WP_Error( 'invalid_serviceId', __( 'serviceId is required.', 'harudigi-booking-abilities-for-amelia' ) );
 	}
 	foreach ( array( 'startDateTime', 'endDateTime' ) as $key ) {
 		if ( ! empty( $input[ $key ] ) ) {
@@ -303,7 +303,7 @@ function ability_add_customer_patched( $input = array() ) {
 	$input      = is_array( $input ) ? $input : array();
 	$first_name = sanitize_text_field( (string) ( $input['firstName'] ?? '' ) );
 	if ( '' === $first_name ) {
-		return new \WP_Error( 'invalid_firstName', __( 'firstName is required.', 'mcp-abilities-for-amelia' ) );
+		return new \WP_Error( 'invalid_firstName', __( 'firstName is required.', 'harudigi-booking-abilities-for-amelia' ) );
 	}
 
 	$last_name = sanitize_text_field( (string) ( $input['lastName'] ?? '' ) );
@@ -314,7 +314,7 @@ function ability_add_customer_patched( $input = array() ) {
 		if ( '' === $email || ! is_email( $email ) ) {
 			return new \WP_Error(
 				'invalid_email',
-				__( 'email is invalid. Omit email or pass an empty string when the customer has no email.', 'mcp-abilities-for-amelia' )
+				__( 'email is invalid. Omit email or pass an empty string when the customer has no email.', 'harudigi-booking-abilities-for-amelia' )
 			);
 		}
 	}
@@ -348,7 +348,7 @@ function ability_create_appointment_patched( $input = array() ) {
 	if ( $service_id <= 0 || $provider_id <= 0 || $customer_id <= 0 || '' === $start ) {
 		return new \WP_Error(
 			'invalid_fields',
-			__( 'serviceId, providerId, customerId, and bookingStart are required.', 'mcp-abilities-for-amelia' )
+			__( 'serviceId, providerId, customerId, and bookingStart are required.', 'harudigi-booking-abilities-for-amelia' )
 		);
 	}
 
@@ -406,7 +406,7 @@ function ability_book_event_patched( $input = array() ) {
 	$event_id    = (int) ( $input['eventId'] ?? 0 );
 	$customer_id = (int) ( $input['customerId'] ?? 0 );
 	if ( $event_id <= 0 || $customer_id <= 0 ) {
-		return new \WP_Error( 'invalid_fields', __( 'eventId and customerId are required.', 'mcp-abilities-for-amelia' ) );
+		return new \WP_Error( 'invalid_fields', __( 'eventId and customerId are required.', 'harudigi-booking-abilities-for-amelia' ) );
 	}
 
 	$booking = array(

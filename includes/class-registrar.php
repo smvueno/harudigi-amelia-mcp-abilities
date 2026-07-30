@@ -26,8 +26,8 @@ final class Registrar {
 		wp_register_ability_category(
 			'amelia-ops',
 			array(
-				'label'       => __( 'Amelia Ops', 'mcp-abilities-for-amelia' ),
-				'description' => __( 'Admin control beyond Amelia Pro MCP (catalog, payments, settings).', 'mcp-abilities-for-amelia' ),
+				'label'       => __( 'Amelia Ops', 'harudigi-booking-abilities-for-amelia' ),
+				'description' => __( 'Admin control beyond Amelia Pro MCP (catalog, payments, settings).', 'harudigi-booking-abilities-for-amelia' ),
 			)
 		);
 	}

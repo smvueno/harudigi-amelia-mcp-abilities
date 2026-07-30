@@ -3,15 +3,15 @@
 #   ./scripts/build-zip.sh          → GitHub distribution (with updater)
 #   ./scripts/build-zip.sh wporg    → WordPress.org distribution (no updater / Update URI)
 #
-# Install slug (folder inside ZIP): mcp-abilities-for-amelia
+# Install slug (folder inside ZIP): harudigi-booking-abilities-for-amelia
 # GitHub repo may remain smvueno/harudigi-amelia-mcp-abilities.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 MODE="${1:-github}"
-MAIN="mcp-abilities-for-amelia.php"
+MAIN="harudigi-booking-abilities-for-amelia.php"
 VERSION="$(grep -E "^\s*\*\s*Version:" "$ROOT/$MAIN" | head -1 | sed -E 's/.*Version:\s*//')"
-SLUG="mcp-abilities-for-amelia"
+SLUG="harudigi-booking-abilities-for-amelia"
 DIST="$ROOT/dist"
 STAGE="$DIST/$SLUG"
 OUT_NAME="${SLUG}-${VERSION}"

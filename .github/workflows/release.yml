@@ -23,8 +23,9 @@ jobs:
           REF="${GITHUB_REF_NAME}"
           VER="${REF#v}"
           echo "version=$VER" >> "$GITHUB_OUTPUT"
-          echo "zip=mcp-abilities-for-amelia-${VER}.zip" >> "$GITHUB_OUTPUT"
-          echo "zip_wporg=mcp-abilities-for-amelia-${VER}-wporg.zip" >> "$GITHUB_OUTPUT"
+          echo "zip=harudigi-booking-abilities-for-amelia-${VER}.zip" >> "$GITHUB_OUTPUT"
+          echo "zip_wporg=harudigi-booking-abilities-for-amelia-${VER}-wporg.zip" >> "$GITHUB_OUTPUT"
+          # keep names aligned with scripts/build-zip.sh
 
       - name: Build GitHub + WordPress.org zips
         run: |
@@ -48,7 +49,7 @@ jobs:
             - **GitHub / direct ZIP** (auto-updates from GitHub Releases): `${{ steps.ver.outputs.zip }}`
             - **WordPress.org review/upload** (no GitHub updater): `${{ steps.ver.outputs.zip_wporg }}`
 
-            Plugin folder slug: `mcp-abilities-for-amelia`
+            Plugin folder slug: `harudigi-booking-abilities-for-amelia`
 
             Requires **Easy MCP AI** and **Amelia Booking 9.7+**.
 

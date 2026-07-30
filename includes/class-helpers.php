@@ -52,7 +52,7 @@ final class Helpers {
 	/** @return true|\WP_Error */
 	public static function require_amelia() {
 		if ( ! defined( 'AMELIA_PATH' ) || ! defined( 'AMELIA_VERSION' ) ) {
-			return new \WP_Error( 'amelia_inactive', __( 'Amelia Booking is not active.', 'mcp-abilities-for-amelia' ) );
+			return new \WP_Error( 'amelia_inactive', __( 'Amelia Booking is not active.', 'harudigi-booking-abilities-for-amelia' ) );
 		}
 		return true;
 	}
@@ -90,7 +90,7 @@ final class Helpers {
 		if ( ! class_exists( $controller_class ) ) {
 			return new \WP_Error(
 				'amelia_controller_missing',
-				__( 'Amelia controller is not available.', 'mcp-abilities-for-amelia' )
+				__( 'Amelia controller is not available.', 'harudigi-booking-abilities-for-amelia' )
 			);
 		}
 
@@ -116,7 +116,7 @@ final class Helpers {
 			$payload    = self::redact( $payload );
 
 			if ( $status >= 400 ) {
-				$msg = isset( $data['message'] ) ? (string) $data['message'] : __( 'Amelia command failed.', 'mcp-abilities-for-amelia' );
+				$msg = isset( $data['message'] ) ? (string) $data['message'] : __( 'Amelia command failed.', 'harudigi-booking-abilities-for-amelia' );
 				return new \WP_Error(
 					$status === 403 ? 'amelia_access_denied' : 'amelia_command_error',
 					self::safe_error_message( $msg ),
@@ -137,23 +137,23 @@ final class Helpers {
 					'amelia_not_found',
 					sprintf(
 						/* translators: %s: entity id */
-						__( 'Amelia entity not found (id %s).', 'mcp-abilities-for-amelia' ),
+						__( 'Amelia entity not found (id %s).', 'harudigi-booking-abilities-for-amelia' ),
 						$m[1]
 					)
 				);
 			}
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( '[mcp-abilities-for-amelia] invoke failed: ' . $msg );
+				error_log( '[harudigi-booking-abilities-for-amelia] invoke failed: ' . $msg );
 			}
 			// Surface short Amelia validation errors (mandatory fields, etc.).
 			$safe = self::safe_error_message( $msg );
-			if ( $safe !== __( 'Amelia command failed.', 'mcp-abilities-for-amelia' ) && $safe !== __( 'Amelia invoke failed. Check WordPress/Amelia logs for details.', 'mcp-abilities-for-amelia' ) ) {
+			if ( $safe !== __( 'Amelia command failed.', 'harudigi-booking-abilities-for-amelia' ) && $safe !== __( 'Amelia invoke failed. Check WordPress/Amelia logs for details.', 'harudigi-booking-abilities-for-amelia' ) ) {
 				return new \WP_Error( 'amelia_invoke_failed', $safe );
 			}
 			return new \WP_Error(
 				'amelia_invoke_failed',
-				__( 'Amelia invoke failed. Check WordPress/Amelia logs for details.', 'mcp-abilities-for-amelia' )
+				__( 'Amelia invoke failed. Check WordPress/Amelia logs for details.', 'harudigi-booking-abilities-for-amelia' )
 			);
 		}
 	}
@@ -164,11 +164,11 @@ final class Helpers {
 	public static function safe_error_message( string $message ): string {
 		$message = trim( wp_strip_all_tags( $message ) );
 		if ( '' === $message ) {
-			return __( 'Amelia command failed.', 'mcp-abilities-for-amelia' );
+			return __( 'Amelia command failed.', 'harudigi-booking-abilities-for-amelia' );
 		}
 		// Block path / SQL / stack-ish leakage.
 		if ( preg_match( '/(?:\/(?:var|home|usr|tmp|wp-|plugins)|\\\\|SQLSTATE|Stack trace|PDOException|mysqli)/i', $message ) ) {
-			return __( 'Amelia command failed.', 'mcp-abilities-for-amelia' );
+			return __( 'Amelia command failed.', 'harudigi-booking-abilities-for-amelia' );
 		}
 		if ( strlen( $message ) > 240 ) {
 			$message = substr( $message, 0, 237 ) . '...';
@@ -230,7 +230,7 @@ final class Helpers {
 	public static function parse_id( $id, string $label = 'id' ) {
 		if ( ! is_numeric( $id ) || (int) $id <= 0 ) {
 			/* translators: %s: field label */
-			return new \WP_Error( 'invalid_' . $label, sprintf( __( 'Invalid %s.', 'mcp-abilities-for-amelia' ), $label ) );
+			return new \WP_Error( 'invalid_' . $label, sprintf( __( 'Invalid %s.', 'harudigi-booking-abilities-for-amelia' ), $label ) );
 		}
 		return (int) $id;
 	}
@@ -248,7 +248,7 @@ final class Helpers {
 		}
 		return new \WP_Error(
 			'confirm_required',
-			__( 'Destructive action refused. Set confirm=true only after the user explicitly approved permanent deletion. Prefer cancel/hide/disable when possible.', 'mcp-abilities-for-amelia' )
+			__( 'Destructive action refused. Set confirm=true only after the user explicitly approved permanent deletion. Prefer cancel/hide/disable when possible.', 'harudigi-booking-abilities-for-amelia' )
 		);
 	}
 
@@ -264,7 +264,7 @@ final class Helpers {
 		if ( isset( $input['fields'] ) && is_array( $input['fields'] ) ) {
 			$body = self::sanitize_write_body( $input['fields'] );
 			if ( ! $body ) {
-				return new \WP_Error( 'invalid_fields', __( 'Provide fields (or a fields object).', 'mcp-abilities-for-amelia' ) );
+				return new \WP_Error( 'invalid_fields', __( 'Provide fields (or a fields object).', 'harudigi-booking-abilities-for-amelia' ) );
 			}
 			return $body;
 		}
@@ -275,7 +275,7 @@ final class Helpers {
 		}
 		$body = self::sanitize_write_body( $body );
 		if ( ! $body ) {
-			return new \WP_Error( 'invalid_fields', __( 'Provide fields (or a fields object).', 'mcp-abilities-for-amelia' ) );
+			return new \WP_Error( 'invalid_fields', __( 'Provide fields (or a fields object).', 'harudigi-booking-abilities-for-amelia' ) );
 		}
 		return $body;
 	}
@@ -290,7 +290,7 @@ final class Helpers {
 				'invalid_status',
 				sprintf(
 					/* translators: %s: allowed statuses */
-					__( 'Invalid status. Use: %s', 'mcp-abilities-for-amelia' ),
+					__( 'Invalid status. Use: %s', 'harudigi-booking-abilities-for-amelia' ),
 					implode( ', ', $allowed )
 				)
 			);
@@ -310,7 +310,7 @@ final class Helpers {
 				'invalid_status',
 				sprintf(
 					/* translators: %s: allowed statuses */
-					__( 'Invalid status. Use: %s', 'mcp-abilities-for-amelia' ),
+					__( 'Invalid status. Use: %s', 'harudigi-booking-abilities-for-amelia' ),
 					implode( ', ', $allowed )
 				)
 			);
@@ -467,8 +467,8 @@ final class Helpers {
 				'active'  => ! empty( $activation['active'] ),
 			),
 			'counts'          => $counts,
-			'native_abilities'=> amelia_native_ability_slugs(),
-			'helper_abilities'=> amelia_mcp_abilities_slugs(),
+			'native_abilities'=> harudigi_amelia_mcp_native_ability_slugs(),
+			'helper_abilities'=> harudigi_amelia_mcp_gap_ability_slugs(),
 		);
 	}
 
@@ -479,11 +479,11 @@ final class Helpers {
 			'amelia_version'   => defined( 'AMELIA_VERSION' ) ? AMELIA_VERSION : null,
 			'native_amelia'    => array(
 				'note'     => 'Registered by Amelia Pro (amelia-read / amelia-write). Do not duplicate.',
-				'abilities'=> amelia_native_ability_slugs(),
+				'abilities'=> harudigi_amelia_mcp_native_ability_slugs(),
 			),
 			'helper_gaps'      => array(
-				'note'     => 'Registered by mcp-abilities-for-amelia (amelia-ops) for full admin control.',
-				'abilities'=> amelia_mcp_abilities_slugs(),
+				'note'     => 'Registered by harudigi-booking-abilities-for-amelia (amelia-ops) for full admin control.',
+				'abilities'=> harudigi_amelia_mcp_gap_ability_slugs(),
 			),
 			'never_expose'     => array(
 				'Payment gateway secrets', 'SMTP/SMS/WhatsApp API keys',

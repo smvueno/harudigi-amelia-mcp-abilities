@@ -310,7 +310,7 @@ function list_custom_fields_for_entity( int $service_id = 0, bool $for_events = 
  */
 function get_service_booking_options( int $service_id ) {
 	if ( $service_id <= 0 ) {
-		return new \WP_Error( 'invalid_service_id', __( 'Invalid service_id.', 'mcp-abilities-for-amelia' ) );
+		return new \WP_Error( 'invalid_service_id', __( 'Invalid service_id.', 'harudigi-booking-abilities-for-amelia' ) );
 	}
 
 	$result = Helpers::invoke( GetServiceController::class, array(), array( 'id' => $service_id ), 'GET' );
@@ -321,7 +321,7 @@ function get_service_booking_options( int $service_id ) {
 	$data    = isset( $result['data'] ) && is_array( $result['data'] ) ? $result['data'] : $result;
 	$service = $data['service'] ?? $data;
 	if ( ! is_array( $service ) ) {
-		return new \WP_Error( 'amelia_not_found', __( 'Service not found.', 'mcp-abilities-for-amelia' ) );
+		return new \WP_Error( 'amelia_not_found', __( 'Service not found.', 'harudigi-booking-abilities-for-amelia' ) );
 	}
 
 	$custom_pricing = decode_custom_pricing( $service['customPricing'] ?? null );
