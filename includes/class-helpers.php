@@ -454,11 +454,17 @@ final class Helpers {
 			return $ok;
 		}
 		global $wpdb;
-		$prefix = $wpdb->prefix . 'amelia_';
-		$counts = array();
-		foreach ( array( 'appointments', 'events', 'users', 'services', 'locations', 'categories', 'packages', 'coupons', 'payments' ) as $table ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$counts[ $table ] = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$prefix}{$table}" );
+		$cache_key = 'harudigi_amelia_mcp_status_counts';
+		$counts    = wp_cache_get( $cache_key, 'harudigi_amelia_mcp' );
+		if ( ! is_array( $counts ) ) {
+			$counts = array();
+			foreach ( array( 'appointments', 'events', 'users', 'services', 'locations', 'categories', 'packages', 'coupons', 'payments' ) as $table ) {
+				// Allowlisted Amelia table suffix only — %i is supported on WP 6.2+ (we require 6.9+).
+				$table_name = $wpdb->prefix . 'amelia_' . $table;
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Amelia entity counts; no public aggregate API for all tables.
+				$counts[ $table ] = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i', $table_name ) );
+			}
+			wp_cache_set( $cache_key, $counts, 'harudigi_amelia_mcp', MINUTE_IN_SECONDS );
 		}
 		$settings   = new SettingsService( new SettingsStorage() );
 		$activation = self::redact( (array) $settings->getCategorySettings( 'activation' ) );

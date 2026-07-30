@@ -1,10 +1,10 @@
 === HaruDigi Booking Abilities for Amelia and Easy MCP AI ===
 Contributors: smvueno, jensmadsen, harudigi
-Tags: amelia, booking, mcp, ai, abilities, easy-mcp
+Tags: amelia, booking, mcp, ai, abilities
 Requires at least: 6.9
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.7.2
+Stable tag: 1.7.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -81,6 +81,10 @@ Easy MCP AI is the MCP host that exposes abilities to your AI tools. This plugin
 
 == Changelog ==
 
+= 1.7.3 =
+* Limit readme tags to 5 (Plugin Check)
+* Prepare Amelia count queries with %i identifiers
+
 = 1.7.2 =
 * Fix update-appointment extras persistence (keep customerBookingId when updating existing extra rows)
 
@@ -113,6 +117,9 @@ Easy MCP AI is the MCP host that exposes abilities to your AI tools. This plugin
 * Public HaruDigi branded release
 
 == Upgrade Notice ==
+
+= 1.7.3 =
+Plugin Check cleanups (tags, DB prepare). Upload *-wporg.zip for WordPress.org.
 
 = 1.7.2 =
 Fixes appointment extras being dropped on update. Use *-wporg.zip for WordPress.org.
