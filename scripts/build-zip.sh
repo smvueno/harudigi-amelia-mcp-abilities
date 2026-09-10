@@ -36,6 +36,7 @@ mkdir -p "$STAGE"
 rsync -a \
   --exclude '.git/' \
   --exclude '.github/' \
+  --exclude '.cursor/' \
   --exclude '.wordpress-org/' \
   --exclude 'docs/' \
   --exclude 'dist/' \

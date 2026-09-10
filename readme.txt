@@ -4,7 +4,7 @@ Tags: amelia, booking, mcp, ai, abilities
 Requires at least: 6.9
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.0.2
+Stable tag: 2.0.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,23 +80,39 @@ Leave `notify` / `notifyParticipants` unset or false (the default). Only set tru
 
 == Changelog ==
 
+= 2.0.3 =
+* Added: Single changelog source (`CHANGELOG.md`) synced to wordpress.org `readme.txt` and GitHub release notes
+* Added: CI check so releases cannot ship without human-readable notes
+* Added: Project Cursor skill for maintainers (`.cursor/skills/harudigi-amelia-mcp`)
+
 = 2.0.2 =
-* Automate WordPress.org SVN deploy from GitHub Actions (SVN secrets)
-* Harden zip build / .distignore for production releases
+* Added: WordPress.org SVN deploy from GitHub Actions (`SVN_USERNAME` / `SVN_PASSWORD`)
+* Added: Hardened production zip build and `.distignore`
 
 = 2.0.1 =
-* Meta-tool surface only (7 abilities); suppress Amelia Pro natives from Abilities API
-* Booking: site defaultAppointmentStatus; notify default false; extras qty; CF map
-* Payments: CRUD + payment link URL
-* Docs aligned with Easy MCP vs Amelia Pro MCP
+* Added: Seven meta abilities only: `help`, `status`, `discover`, `query`, `mutate`, `book`, `pay`
+* Added: Payment CRUD and Stripe payment-link URLs via `amelia/pay`
+* Added: Extras quantity and simple custom-field maps on bookings
+* Changed: Booking `status` omitted → Amelia `defaultAppointmentStatus` (not hardcoded approved)
+* Changed: `notify` defaults false — ask before emailing customers
+* Changed: Amelia Pro native abilities unregistered while this plugin is active (Easy MCP)
 
 = 2.0.0 =
-* Breaking: replace ~90 fine-grained abilities with 7 meta tools
+* Changed: Breaking: replaced ~90 fine-grained abilities with 7 meta tools
 
 = 1.7.4 =
-* Cache Amelia status counts; Plugin Check cleanups
+* Fixed: Cache Amelia status counts; Plugin Check cleanups under install slug
+
+= 1.7.3 =
+* Fixed: Plugin Check cleanups
+
+= 1.7.2 =
+* Fixed: Appointment extras dropped on update
 
 == Upgrade Notice ==
+
+= 2.0.3 =
+Changelog is now maintained in one place and published to GitHub and wordpress.org automatically.
 
 = 2.0.2 =
 WordPress.org SVN deploy via GitHub Actions; production zip hardening.
@@ -106,3 +122,12 @@ Production: 7 meta Amelia tools for Easy MCP AI; Amelia natives suppressed in Ab
 
 = 2.0.0 =
 Breaking: old fine-grained amelia/* ability slugs removed. Update agent prompts to use meta tools.
+
+= 1.7.4 =
+Fixed: Cache Amelia status counts; Plugin Check cleanups under install slug
+
+= 1.7.3 =
+Fixed: Plugin Check cleanups
+
+= 1.7.2 =
+Fixed: Appointment extras dropped on update

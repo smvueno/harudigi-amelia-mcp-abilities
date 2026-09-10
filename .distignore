@@ -4,6 +4,7 @@
 .distignore
 .git
 .github
+.cursor
 .wordpress-org
 docs
 dist
@@ -26,9 +27,9 @@ composer.lock
 package.json
 package-lock.json
 README.md
+CHANGELOG.md
 CONTRIBUTING.md
 SECURITY.md
-CHANGELOG.md
 .DS_Store
 *.log
 .env

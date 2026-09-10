@@ -11,7 +11,7 @@ Query, mutate, book, and pay without flooding agent context. Independent plugin 
 
 **Docs:** [smvueno.github.io/harudigi-amelia-mcp-abilities](https://smvueno.github.io/harudigi-amelia-mcp-abilities/)  
 **Author:** Jens Madsen · **Brand:** HaruDigi · **Site:** [harudigi.com](https://harudigi.com)  
-**Install slug:** `harudigi-booking-abilities-for-amelia` · **Version:** 2.0.2
+**Install slug:** `harudigi-booking-abilities-for-amelia` · **Version:** 2.0.3
 
 ---
 
@@ -96,6 +96,11 @@ While **this** plugin is active it **unregisters** those 12 native abilities fro
 2. `amelia/discover` for the entity you need
 3. Book: `query` → `booking_options` / `availability` → `book` `create` (leave `notify` false)
 4. Money: `pay` `list` / `add` / `link` as needed
+
+## Changelog / releases
+
+Edit **`CHANGELOG.md` only**, then `python3 scripts/changelog.py check`.  
+Tag `vX.Y.Z` → GitHub notes + wordpress.org `readme.txt` stay in sync. See `.cursor/skills/harudigi-amelia-mcp/SKILL.md`.
 
 ## Dev / test scripts
 

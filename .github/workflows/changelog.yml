@@ -1,0 +1,21 @@
+name: Changelog
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require CHANGELOG notes for plugin Version
+        run: python3 scripts/changelog.py check
+      - name: Fail if readme drifted from CHANGELOG
+        run: |
+          python3 scripts/changelog.py sync
+          git diff --exit-code -- readme.txt || {
+            echo "::error::readme.txt out of sync. Run: python3 scripts/changelog.py sync"
+            exit 1
+          }

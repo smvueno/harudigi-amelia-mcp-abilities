@@ -4,8 +4,6 @@ on:
   push:
     tags:
       - 'v*'
-  release:
-    types: [published]
   workflow_dispatch:
     inputs:
       dry_run:
@@ -32,9 +30,21 @@ jobs:
         run: |
           REF="${GITHUB_REF_NAME}"
           VER="${REF#v}"
+          if [[ ! "$VER" =~ ^[0-9]+\.[0-9]+ ]]; then
+            VER="$(grep -E '^\s*\*\s*Version:' harudigi-booking-abilities-for-amelia.php | head -1 | sed -E 's/.*Version:[[:space:]]*//' | tr -d '[:space:]')"
+          fi
           echo "version=$VER" >> "$GITHUB_OUTPUT"
           echo "zip=harudigi-booking-abilities-for-amelia-${VER}.zip" >> "$GITHUB_OUTPUT"
           echo "zip_wporg=harudigi-booking-abilities-for-amelia-${VER}-wporg.zip" >> "$GITHUB_OUTPUT"
+
+      - name: Sync changelog (readme + require notes)
+        run: |
+          python3 scripts/changelog.py check --version "${{ steps.ver.outputs.version }}"
+
+      - name: Build release body
+        run: |
+          python3 scripts/changelog.py github-body "${{ steps.ver.outputs.version }}" > release-body.md
+          cat release-body.md
 
       - name: Build GitHub + WordPress.org zips
         run: |
@@ -48,29 +58,15 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
+          name: v${{ steps.ver.outputs.version }}
           files: |
             ${{ steps.ver.outputs.zip }}
             ${{ steps.ver.outputs.zip_wporg }}
           fail_on_unmatched_files: true
-          generate_release_notes: true
-          body: |
-            ## Install
-            - **GitHub / direct ZIP** (auto-updates from GitHub Releases): `${{ steps.ver.outputs.zip }}`
-            - **WordPress.org review/upload** (no GitHub updater): `${{ steps.ver.outputs.zip_wporg }}`
-
-            Plugin folder slug: `harudigi-booking-abilities-for-amelia`
-
-            Requires **Easy MCP AI** and **Amelia Booking 9.7+**.
-
-            Independent HaruDigi plugin — not affiliated with or endorsed by TMS Software.
+          body_path: release-body.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Deploys stripped plugin tree to plugins.svn.wordpress.org.
-  # Required repo secrets (Settings → Secrets and variables → Actions):
-  #   SVN_USERNAME  — WordPress.org username (e.g. smvueno)
-  #   SVN_PASSWORD  — WordPress.org SVN password
-  #     https://profiles.wordpress.org/me/profile/edit/group/3/?screen=svn-password
   wordpress_org:
     needs: zip
     runs-on: ubuntu-latest
@@ -87,6 +83,9 @@ jobs:
             echo "::error::Add repo secrets SVN_USERNAME and SVN_PASSWORD, then re-run."
             exit 1
           fi
+
+      - name: Sync changelog into readme.txt
+        run: python3 scripts/changelog.py sync
 
       - name: Strip GitHub updater for wordpress.org
         run: |
