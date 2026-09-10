@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>HaruDigi Booking Abilities for Amelia and Easy MCP AI — Extra Amelia tools for Easy MCP AI</title>
-  <meta name="description" content="HaruDigi Booking Abilities for Amelia and Easy MCP AI adds safe Amelia Booking 9.7+ abilities to Easy MCP AI. Independent HaruDigi plugin — not affiliated with TMS Software." />
+  <title>HaruDigi Booking Abilities for Amelia and Easy MCP AI — 7 meta tools</title>
+  <meta name="description" content="Compact Amelia Booking 9.7+ MCP for Easy MCP AI: 7 meta abilities (help, status, discover, query, mutate, book, pay). Independent HaruDigi plugin — not affiliated with TMS Software." />
   <meta name="author" content="Jens Madsen, HaruDigi" />
   <link rel="canonical" href="https://smvueno.github.io/harudigi-amelia-mcp-abilities/" />
   <meta property="og:title" content="HaruDigi Booking Abilities for Amelia and Easy MCP AI" />
-  <meta property="og:description" content="Extra Amelia Booking 9.7+ abilities for Easy MCP AI. By HaruDigi." />
+  <meta property="og:description" content="7 meta Amelia tools for Easy MCP AI — query, mutate, book, pay. By HaruDigi." />
   <meta property="og:url" content="https://smvueno.github.io/harudigi-amelia-mcp-abilities/" />
   <meta property="og:type" content="website" />
   <meta name="theme-color" content="#4A6DB5" />
@@ -74,6 +74,7 @@
     }
     section p, section li { color: var(--muted); margin: 0 0 0.5rem; }
     section ul, section ol { margin: 0.35rem 0 0; padding-left: 1.2rem; }
+    code { font-size: 0.9em; }
     footer {
       margin-top: 2rem; font-family: "Segoe UI", system-ui, sans-serif;
       font-size: 0.85rem; color: var(--muted);
@@ -87,7 +88,8 @@
     <p class="brand"><a href="https://harudigi.com">HaruDigi</a></p>
     <h1>HaruDigi Booking Abilities for Amelia and Easy MCP AI</h1>
     <p class="lede">
-      Extra Amelia Booking <strong>9.7+</strong> abilities for Easy MCP AI — catalog, bookings, payments, and settings — without exposing secrets.
+      Compact Amelia Booking <strong>9.7+</strong> admin MCP for Easy MCP AI —
+      <strong>7 meta tools</strong>, not 100. Query, mutate, book, and pay without flooding agent context.
     </p>
     <div class="cta">
       <a class="btn btn-primary" href="https://github.com/smvueno/harudigi-amelia-mcp-abilities/releases">Download latest release</a>
@@ -101,7 +103,31 @@
         <strong>HaruDigi Booking Abilities for Amelia</strong> is an independent plugin by <strong>HaruDigi</strong>
         and is <strong>not affiliated with or endorsed by TMS Software</strong> (Amelia Booking).
       </p>
-      <p>Author: <strong>Jens Madsen</strong> · Brand: <strong>HaruDigi</strong> · Slug: <code>harudigi-booking-abilities-for-amelia</code></p>
+      <p>Author: <strong>Jens Madsen</strong> · Brand: <strong>HaruDigi</strong> · Slug: <code>harudigi-booking-abilities-for-amelia</code> · Version <strong>2.0.1</strong></p>
+    </section>
+
+    <section>
+      <h2>Seven tools</h2>
+      <ul>
+        <li><code>amelia/help</code> — usage + safety</li>
+        <li><code>amelia/status</code> — versions + default appointment status</li>
+        <li><code>amelia/discover</code> — entities and examples</li>
+        <li><code>amelia/query</code> — list / get / stats / availability / booking_options / settings</li>
+        <li><code>amelia/mutate</code> — catalog + customers CRUD</li>
+        <li><code>amelia/book</code> — appointments and events</li>
+        <li><code>amelia/pay</code> — payments + payment link URLs</li>
+      </ul>
+      <p>Connect via Easy MCP AI: <code>/wp-json/easy-mcp-ai/v1/mcp</code></p>
+    </section>
+
+    <section>
+      <h2>Safety defaults</h2>
+      <ul>
+        <li><code>notify</code> defaults <strong>false</strong> — ask before emailing customers</li>
+        <li>Booking status omitted → Amelia <code>defaultAppointmentStatus</code></li>
+        <li>Deletes / cancel need <code>confirm: true</code></li>
+        <li>Secrets redacted; password / <code>externalId</code> writes blocked</li>
+      </ul>
     </section>
 
     <section>
@@ -111,6 +137,15 @@
         <li><strong>Amelia Booking 9.7+</strong> (required for abilities to run)</li>
         <li>WordPress 6.9+ · PHP 7.4+</li>
       </ul>
+    </section>
+
+    <section>
+      <h2>Amelia Pro MCP</h2>
+      <p>
+        Amelia Pro also ships its own MCP HTTP route. This plugin targets <strong>Easy MCP AI</strong> only
+        and does not configure Amelia’s adapter. While active it unregisters Amelia’s native abilities
+        from the Abilities API so Easy MCP does not expose duplicates; deactivate to restore them.
+      </p>
     </section>
 
     <section>

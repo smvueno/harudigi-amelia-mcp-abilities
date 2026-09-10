@@ -1,22 +1,28 @@
 <?php
 /**
- * Registers amelia-ops category and gap-filler abilities.
+ * Registers ≤7 meta abilities for Easy MCP.
  *
  * @package Harudigi_Amelia_MCP_Abilities
  */
 
 namespace Harudigi_Amelia_MCP_Abilities;
 
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
+
 final class Registrar {
 
 	public static function init(): void {
 		add_action( 'wp_abilities_api_categories_init', array( __CLASS__, 'register_category' ) );
 		add_action( 'wp_abilities_api_init', array( __CLASS__, 'register_abilities' ), 20 );
-		add_action( 'wp_abilities_api_init', array( __CLASS__, 'patch_native' ), 30 );
+		// After Amelia Pro registers its natives (default priority 10).
+		add_action( 'wp_abilities_api_init', array( __CLASS__, 'suppress_natives' ), 100 );
+	}
+
+	public static function suppress_natives(): void {
+		require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/native-suppress.php';
+		unregister_amelia_native_abilities();
 	}
 
 	public static function register_category(): void {
@@ -27,7 +33,7 @@ final class Registrar {
 			'amelia-ops',
 			array(
 				'label'       => __( 'Amelia Ops', 'harudigi-booking-abilities-for-amelia' ),
-				'description' => __( 'Admin control beyond Amelia Pro MCP (catalog, payments, settings).', 'harudigi-booking-abilities-for-amelia' ),
+				'description' => __( 'Compact Amelia admin MCP tools (query, mutate, book, pay).', 'harudigi-booking-abilities-for-amelia' ),
 			)
 		);
 	}
@@ -36,16 +42,13 @@ final class Registrar {
 		if ( ! function_exists( 'wp_register_ability' ) ) {
 			return;
 		}
-		require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/abilities-discover.php';
-		require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/abilities-catalog.php';
-		require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/abilities-booking.php';
-		register_discover_abilities();
-		register_catalog_abilities();
-		register_booking_abilities();
-	}
-
-	public static function patch_native(): void {
-		require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/abilities-native-patch.php';
-		patch_native_abilities();
+		require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/class-entity-map.php';
+		require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/booking-payload.php';
+		require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/payment-payload.php';
+		require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/meta-handlers.php';
+		require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/meta-mutate.php';
+		require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/meta-book.php';
+		require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/meta-pay.php';
+		register_meta_abilities();
 	}
 }

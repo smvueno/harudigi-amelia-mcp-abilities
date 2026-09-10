@@ -378,10 +378,11 @@ function get_service_booking_options( int $service_id ) {
 		'mandatoryExtra'         => $service['mandatoryExtra'] ?? null,
 		'custom_fields'          => $fields,
 		'how_to_book'            => array(
-			'duration'      => 'Pass duration in seconds on create-appointment (e.g. 3600=1h, 7200=2h). Use duration_tiers. Also pass the same value as serviceDuration to check-availability.',
-			'extras'        => 'Pass extras: [{extraId, quantity}] on create-appointment. For check-availability use [{id, quantity}].',
-			'custom_fields' => 'Pass customFields as an object keyed by field id: {"12":{"label":"...","type":"text","value":"..."}}.',
-			'update'        => 'On update-appointment, put duration/extras/customFields on fields.bookings[].',
+			'duration'      => 'amelia/book action=create: pass duration as seconds or "1h"/"90m". For availability use amelia/query action=availability with serviceDuration.',
+			'extras'        => 'amelia/book: extras [{extraId, quantity}]. Availability: [{id, quantity}].',
+			'custom_fields' => 'Prefer simple map {"3":"text value","4":"WhatsApp"}. Full Amelia objects also accepted.',
+			'update'        => 'amelia/book action=update id=N with extras/customFields/persons/status at top level (merges onto first booking).',
+			'status'        => 'Omit status → Amelia defaultAppointmentStatus. notify defaults false — ask human before true.',
 		),
 	);
 }

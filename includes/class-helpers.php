@@ -481,33 +481,25 @@ final class Helpers {
 				'active'  => ! empty( $activation['active'] ),
 			),
 			'counts'          => $counts,
-			'native_abilities'=> harudigi_amelia_mcp_native_ability_slugs(),
-			'helper_abilities'=> harudigi_amelia_mcp_gap_ability_slugs(),
+			'meta_abilities'  => harudigi_amelia_mcp_meta_ability_slugs(),
 		);
 	}
 
 	/** @return array<string, mixed> */
 	public static function api_surface(): array {
 		return array(
-			'bridge_version'   => HARUDIGI_AMELIA_MCP_VERSION,
-			'amelia_version'   => defined( 'AMELIA_VERSION' ) ? AMELIA_VERSION : null,
-			'native_amelia'    => array(
-				'note'     => 'Registered by Amelia Pro (amelia-read / amelia-write). Do not duplicate.',
-				'abilities'=> harudigi_amelia_mcp_native_ability_slugs(),
-			),
-			'helper_gaps'      => array(
-				'note'     => 'Registered by harudigi-booking-abilities-for-amelia (amelia-ops) for full admin control.',
-				'abilities'=> harudigi_amelia_mcp_gap_ability_slugs(),
-			),
-			'never_expose'     => array(
+			'bridge_version' => HARUDIGI_AMELIA_MCP_VERSION,
+			'amelia_version' => defined( 'AMELIA_VERSION' ) ? AMELIA_VERSION : null,
+			'meta_abilities' => harudigi_amelia_mcp_meta_ability_slugs(),
+			'never_expose'   => array(
 				'Payment gateway secrets', 'SMTP/SMS/WhatsApp API keys',
 				'OAuth tokens', 'Purchase/license codes',
 				'Passwords / externalId (WP user link) via MCP writes',
 			),
-			'safety'           => array(
+			'safety'         => array(
 				'deletes_require_confirm' => true,
+				'notify_default'          => false,
 				'list_max_limit'          => self::LIST_MAX_LIMIT,
-				'get_entities_requires_confirm' => true,
 				'blocked_write_keys'      => self::BLOCKED_WRITE_KEYS,
 			),
 		);
