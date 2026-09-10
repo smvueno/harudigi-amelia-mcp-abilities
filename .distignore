@@ -1,6 +1,7 @@
 # Files/folders excluded from WordPress.org SVN deploys (10up action + mirrors).
 # Keep in sync with scripts/build-zip.sh denylist where practical.
 
+.distignore
 .git
 .github
 .wordpress-org
