@@ -11,7 +11,7 @@ Query, mutate, book, and pay without flooding agent context. Independent plugin 
 
 **Docs:** [smvueno.github.io/harudigi-amelia-mcp-abilities](https://smvueno.github.io/harudigi-amelia-mcp-abilities/)  
 **Author:** Jens Madsen · **Brand:** HaruDigi · **Site:** [harudigi.com](https://harudigi.com)  
-**Install slug:** `harudigi-booking-abilities-for-amelia` · **Version:** 2.0.1
+**Install slug:** `harudigi-booking-abilities-for-amelia` · **Version:** 2.0.2
 
 ---
 

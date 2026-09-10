@@ -4,7 +4,7 @@ Tags: amelia, booking, mcp, ai, abilities
 Requires at least: 6.9
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.0.1
+Stable tag: 2.0.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,10 @@ Leave `notify` / `notifyParticipants` unset or false (the default). Only set tru
 
 == Changelog ==
 
+= 2.0.2 =
+* Automate WordPress.org SVN deploy from GitHub Actions (SVN secrets)
+* Harden zip build / .distignore for production releases
+
 = 2.0.1 =
 * Meta-tool surface only (7 abilities); suppress Amelia Pro natives from Abilities API
 * Booking: site defaultAppointmentStatus; notify default false; extras qty; CF map
@@ -93,6 +97,9 @@ Leave `notify` / `notifyParticipants` unset or false (the default). Only set tru
 * Cache Amelia status counts; Plugin Check cleanups
 
 == Upgrade Notice ==
+
+= 2.0.2 =
+WordPress.org SVN deploy via GitHub Actions; production zip hardening.
 
 = 2.0.1 =
 Production: 7 meta Amelia tools for Easy MCP AI; Amelia natives suppressed in Abilities API.
