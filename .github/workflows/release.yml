@@ -6,9 +6,19 @@ on:
       - 'v*'
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'WordPress.org deploy dry-run (no SVN commit)'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   zip:
@@ -25,7 +35,6 @@ jobs:
           echo "version=$VER" >> "$GITHUB_OUTPUT"
           echo "zip=harudigi-booking-abilities-for-amelia-${VER}.zip" >> "$GITHUB_OUTPUT"
           echo "zip_wporg=harudigi-booking-abilities-for-amelia-${VER}-wporg.zip" >> "$GITHUB_OUTPUT"
-          # keep names aligned with scripts/build-zip.sh
 
       - name: Build GitHub + WordPress.org zips
         run: |
@@ -56,3 +65,39 @@ jobs:
             Independent HaruDigi plugin — not affiliated with or endorsed by TMS Software.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Deploys stripped plugin tree to plugins.svn.wordpress.org.
+  # Required repo secrets (Settings → Secrets and variables → Actions):
+  #   SVN_USERNAME  — WordPress.org username (e.g. smvueno)
+  #   SVN_PASSWORD  — WordPress.org SVN password
+  #     https://profiles.wordpress.org/me/profile/edit/group/3/?screen=svn-password
+  wordpress_org:
+    needs: zip
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Require SVN secrets
+        env:
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+        run: |
+          if [ -z "$SVN_USERNAME" ] || [ -z "$SVN_PASSWORD" ]; then
+            echo "::error::Add repo secrets SVN_USERNAME and SVN_PASSWORD, then re-run."
+            exit 1
+          fi
+
+      - name: Strip GitHub updater for wordpress.org
+        run: |
+          chmod +x scripts/prepare-wporg-checkout.sh
+          ./scripts/prepare-wporg-checkout.sh
+
+      - name: Deploy to WordPress.org SVN
+        uses: 10up/action-wordpress-plugin-deploy@2.3.0
+        with:
+          dry-run: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
+        env:
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+          SLUG: harudigi-booking-abilities-for-amelia

@@ -7,3 +7,11 @@ dist/
 *.log
 vendor/
 node_modules/
+
+# Secrets — never commit (keep SVN password in ~/.config/harudigi/ only)
+.env
+.env.*
+*.env
+wporg-svn.env
+*credentials*
+*secret*

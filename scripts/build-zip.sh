@@ -63,8 +63,11 @@ rsync -a \
   --exclude '*.log' \
   --exclude '.env' \
   --exclude '.env.*' \
+  --exclude '*.env' \
+  --exclude 'wporg-svn.env' \
   --exclude '*credentials*' \
   --exclude '*secret*' \
+  --exclude 'svn-ci.sh' \
   --exclude 'tasks*.json' \
   --exclude 'tasks*.md' \
   --exclude 'PRD.md' \
@@ -197,13 +200,13 @@ zip_path, mode, slug = sys.argv[1], sys.argv[2], sys.argv[3]
 deny_name = re.compile(
     r"(?i)(^|/)"
     r"("
-    r"\.git|\.github|\.env|credentials|secret|"
-    r"local-test|pentest|phpunit|composer\.(json|lock)|"
+    r"\.git|\.github|\.env|credentials|secret|wporg-svn|"
+    r"local-test|pentest|svn-ci|phpunit|composer\.(json|lock)|"
     r"package(-lock)?\.json|node_modules|vendor|"
     r"CONTRIBUTING|SECURITY|README\.md|PRD\.md|tasks"
     r")"
 )
-deny_path = re.compile(r"(?i)/(scripts|tests|docs|dist|bin|\.wordpress-org)/")
+deny_path = re.compile(r"(?i)/(scripts|tests|docs|dist|bin|\.wordpress-org|\.config)/")
 errors = []
 names = []
 

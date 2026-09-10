@@ -1,0 +1,44 @@
+# Files/folders excluded from WordPress.org SVN deploys (10up action + mirrors).
+# Keep in sync with scripts/build-zip.sh denylist where practical.
+
+.git
+.github
+.wordpress-org
+docs
+dist
+scripts
+tests
+bin
+node_modules
+vendor
+.idea
+.vscode
+.gitignore
+.gitattributes
+.editorconfig
+.phpcs.xml
+.phpcs.xml.dist
+phpunit.xml
+phpunit.xml.dist
+composer.json
+composer.lock
+package.json
+package-lock.json
+README.md
+CONTRIBUTING.md
+SECURITY.md
+CHANGELOG.md
+.DS_Store
+*.log
+.env
+.env.*
+*.env
+wporg-svn.env
+*credentials*
+*secret*
+tasks.md
+PRD.md
+tasks*.json
+
+# GitHub-only updater — stripped for wordpress.org
+includes/class-github-updater.php

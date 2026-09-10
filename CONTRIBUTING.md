@@ -25,6 +25,20 @@ Thanks for helping improve **HaruDigi Booking Abilities for Amelia and Easy MCP 
 
 ## Releases
 
-Tag `vX.Y.Z`. CI attaches both ZIPs to the GitHub Release.
+Tag `vX.Y.Z`. CI builds GitHub + wporg ZIPs, attaches them to the GitHub Release, then deploys the stripped tree to WordPress.org SVN via [10up/action-wordpress-plugin-deploy](https://github.com/10up/action-wordpress-plugin-deploy).
+
+**Repo secrets** (Settings → Secrets and variables → Actions):
+
+| Secret | Value |
+|--------|--------|
+| `SVN_USERNAME` | WordPress.org username (`smvueno`) |
+| `SVN_PASSWORD` | [SVN password](https://profiles.wordpress.org/me/profile/edit/group/3/?screen=svn-password) |
+
+```bash
+gh secret set SVN_USERNAME -R smvueno/harudigi-amelia-mcp-abilities -b 'smvueno'
+gh secret set SVN_PASSWORD -R smvueno/harudigi-amelia-mcp-abilities   # prompts
+```
+
+Local optional: `~/.config/harudigi/wporg-svn.env` + `scripts/svn-ci.sh` (never commit; outside the repo).
 
 — Jens Madsen · HaruDigi · https://harudigi.com
