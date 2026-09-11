@@ -732,6 +732,9 @@ function merge_service_update_fields( array $existing, array $patch ): array {
 	$merged['minCapacity'] = isset( $merged['minCapacity'] ) ? (int) $merged['minCapacity'] : 1;
 	$merged['maxCapacity'] = isset( $merged['maxCapacity'] ) ? (int) $merged['maxCapacity'] : 1;
 	$merged['id']          = (int) ( $merged['id'] ?? 0 );
+	if ( empty( $merged['color'] ) ) {
+		$merged['color'] = '#1788FB';
+	}
 
 	return $merged;
 }

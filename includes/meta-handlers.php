@@ -127,7 +127,7 @@ function register_meta_abilities(): void {
 		array(
 			'label'        => __( 'Mutate Catalog', 'harudigi-booking-abilities-for-amelia' ),
 			'description'  => __(
-				'Create/update/delete/status for catalog + customers (NOT appointments — use amelia/book). Required: action, entity. actions: create|update|delete|status. Pass fields object (or flat fields). delete/status need id; delete needs confirm:true. Example create customer: {action:"create",entity:"customer",fields:{firstName:"MCP",lastName:"Test",email:"mcp-test@example.invalid"}}. Example extra: {action:"create",entity:"extra",fields:{name:"Kimono",price:8000,serviceId:1}}.',
+				'Create/update/delete/status for catalog + customers (NOT appointments — use amelia/book). Required: action, entity. actions: create|update|delete|status. Pass fields object (or flat fields). delete/status need id; delete needs confirm:true. Customer fields: firstName, lastName, email, phone, note (internal). Example create: {action:"create",entity:"customer",fields:{firstName:"MCP",lastName:"Test",email:"mcp-test@example.invalid",note:"VIP"}}. Example extra: {action:"create",entity:"extra",fields:{name:"Kimono",price:8000,serviceId:1}}.',
 				'harudigi-booking-abilities-for-amelia'
 			),
 			'callback'     => __NAMESPACE__ . '\\meta_mutate',

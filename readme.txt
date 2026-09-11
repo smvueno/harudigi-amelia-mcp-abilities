@@ -4,7 +4,7 @@ Tags: amelia, booking, mcp, ai, abilities
 Requires at least: 6.9
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.0.3
+Stable tag: 2.0.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,12 @@ Leave `notify` / `notifyParticipants` unset or false (the default). Only set tru
 
 == Changelog ==
 
+= 2.0.4 =
+* Fixed: Customer notes and other customer fields can be updated (`amelia/mutate`); previously every customer update failed with 409
+* Fixed: Name-only (patch) updates for location, coupon, resource, category, package, employee, and events no longer fail Amelia mandatory-field checks
+* Fixed: Extra create no longer fails on null `maxQuantity`; package/service create send required `color`/`status`
+* Fixed: Package `bookable` accepts `{serviceId, quantity}`; Amelia DB errors return the column hint instead of a generic failure
+
 = 2.0.3 =
 * Added: Single changelog source (`CHANGELOG.md`) synced to wordpress.org `readme.txt` and GitHub release notes
 * Added: CI check so releases cannot ship without human-readable notes
@@ -110,6 +116,9 @@ Leave `notify` / `notifyParticipants` unset or false (the default). Only set tru
 * Fixed: Appointment extras dropped on update
 
 == Upgrade Notice ==
+
+= 2.0.4 =
+Customer notes and catalog/event patch updates work via `amelia/mutate` and `amelia/book`.
 
 = 2.0.3 =
 Changelog is now maintained in one place and published to GitHub and wordpress.org automatically.

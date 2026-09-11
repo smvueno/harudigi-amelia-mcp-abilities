@@ -140,18 +140,39 @@ $cust = meta_mutate(
 			'firstName' => 'MCP',
 			'lastName'  => 'TestCustomer',
 			'email'     => 'mcp-test-' . time() . '@example.invalid',
+			'phone'     => '0900000000',
 			'note'      => 'HaruDigi MCP fake test customer — safe to delete',
 		),
 	)
 );
 t( 'mutate create fake customer', ok_arr( $cust ) );
 $customer_id = 0;
+$customer_user = array();
 if ( ok_arr( $cust ) ) {
 	$data = $cust['data'] ?? $cust;
-	$user = $data['user'] ?? $data['customer'] ?? $data;
-	$customer_id = (int) ( is_array( $user ) ? ( $user['id'] ?? 0 ) : 0 );
+	$customer_user = $data['user'] ?? $data['customer'] ?? $data;
+	$customer_id = (int) ( is_array( $customer_user ) ? ( $customer_user['id'] ?? 0 ) : 0 );
 }
 t( 'fake customer id', $customer_id > 0, 'id=' . $customer_id );
+t( 'create persisted customer note', is_array( $customer_user ) && ( $customer_user['note'] ?? '' ) === 'HaruDigi MCP fake test customer — safe to delete' );
+
+$note_upd = meta_mutate(
+	array(
+		'action' => 'update',
+		'entity' => 'customer',
+		'id'     => $customer_id,
+		'fields' => array( 'note' => 'Updated customer note' ),
+	)
+);
+t( 'mutate update customer note', ok_arr( $note_upd ) );
+$got_cust = $customer_id ? meta_query( array( 'action' => 'get', 'entity' => 'customer', 'id' => $customer_id ) ) : new \WP_Error( 'skip', 'no id' );
+$got_user = array();
+if ( ok_arr( $got_cust ) ) {
+	$gd       = $got_cust['data'] ?? $got_cust;
+	$got_user = $gd['user'] ?? $gd['customer'] ?? $gd;
+}
+t( 'customer note after update', is_array( $got_user ) && ( $got_user['note'] ?? '' ) === 'Updated customer note' );
+t( 'customer phone preserved on note update', is_array( $got_user ) && ( $got_user['phone'] ?? '' ) === '0900000000' );
 
 // Misuse: delete without confirm.
 $mis = meta_mutate( array( 'action' => 'delete', 'entity' => 'customer', 'id' => $customer_id ?: 999999 ) );

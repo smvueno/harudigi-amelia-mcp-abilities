@@ -20,6 +20,7 @@ use AmeliaBooking\Application\Controller\Booking\Appointment\UpdateAppointmentSt
 use AmeliaBooking\Application\Controller\Booking\Appointment\UpdateBookingStatusController;
 use AmeliaBooking\Application\Controller\Booking\Event\AddEventController;
 use AmeliaBooking\Application\Controller\Booking\Event\DeleteEventController;
+use AmeliaBooking\Application\Controller\Booking\Event\GetEventController;
 use AmeliaBooking\Application\Controller\Booking\Event\UpdateEventController;
 
 function meta_book( array $input = array() ) {
@@ -51,8 +52,22 @@ function meta_book( array $input = array() ) {
 		if ( is_wp_error( $id ) ) {
 			return $id;
 		}
+		$existing_res = Helpers::invoke( GetEventController::class, array(), array( 'id' => $id ), 'GET' );
+		if ( is_wp_error( $existing_res ) ) {
+			return $existing_res;
+		}
+		$data     = isset( $existing_res['data'] ) && is_array( $existing_res['data'] ) ? $existing_res['data'] : $existing_res;
+		$existing = $data['event'] ?? $data;
+		if ( ! is_array( $existing ) ) {
+			return new \WP_Error( 'amelia_not_found', __( 'Event not found.', 'harudigi-booking-abilities-for-amelia' ) );
+		}
 		$fields = Helpers::body_from_input( $input, array( 'action', 'id', 'eventId', 'confirm', 'notify' ) );
-		return is_wp_error( $fields ) ? $fields : Helpers::invoke( UpdateEventController::class, $fields, array( 'id' => $id ) );
+		if ( is_wp_error( $fields ) ) {
+			$fields = array();
+		}
+		$body       = array_merge( $existing, $fields );
+		$body['id'] = $id;
+		return Helpers::invoke( UpdateEventController::class, $body, array( 'id' => $id ) );
 	}
 	if ( 'delete_event' === $action ) {
 		$ok = Helpers::require_confirm( $input );

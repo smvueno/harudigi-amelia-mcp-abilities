@@ -6,6 +6,17 @@ All notable changes to **HaruDigi Booking Abilities for Amelia and Easy MCP AI**
 
 Format: [Keep a Changelog](https://keepachangelog.com/) · versions match plugin `Version` / git tags `vX.Y.Z`.
 
+## [2.0.4] - 2026-09-11
+
+### Fixed
+- Customer notes and other customer fields can be updated (`amelia/mutate`); previously every customer update failed with 409
+- Name-only (patch) updates for location, coupon, resource, category, package, employee, and events no longer fail Amelia mandatory-field checks
+- Extra create no longer fails on null `maxQuantity`; package/service create send required `color`/`status`
+- Package `bookable` accepts `{serviceId, quantity}`; Amelia DB errors return the column hint instead of a generic failure
+
+### Upgrade notice
+Customer notes and catalog/event patch updates work via `amelia/mutate` and `amelia/book`.
+
 ## [2.0.3] - 2026-09-10
 
 ### Added

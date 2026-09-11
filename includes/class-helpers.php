@@ -133,6 +133,7 @@ final class Helpers {
 				'data'    => $payload,
 			);
 		} catch ( \Throwable $e ) {
+			self::$container = null;
 			$msg = $e->getMessage();
 			// Normalize Amelia "Invalid key {id}" into a clear not-found error.
 			if ( preg_match( '/^Invalid key\s+(\d+)/i', $msg, $m ) ) {
@@ -169,8 +170,13 @@ final class Helpers {
 		if ( '' === $message ) {
 			return __( 'Amelia command failed.', 'harudigi-booking-abilities-for-amelia' );
 		}
-		// Block path / SQL / stack-ish leakage.
-		if ( preg_match( '/(?:\/(?:var|home|usr|tmp|wp-|plugins)|\\\\|SQLSTATE|Stack trace|PDOException|mysqli)/i', $message ) ) {
+		// WPDB appends SQL + "made by" stack — keep the column/constraint hint only.
+		if ( preg_match( '/^WordPress database error\s+(.+?)\s+for query\b/i', $message, $m ) ) {
+			$message = trim( $m[1] );
+		} elseif ( false !== stripos( $message, 'made by' ) ) {
+			$message = trim( (string) preg_replace( '/\s+made by\b.*$/is', '', $message ) );
+		}
+		if ( preg_match( '/(?:\/(?:var|home|usr|tmp|Users)|\\\\[A-Z]:|SQLSTATE|Stack trace|PDOException)/i', $message ) ) {
 			return __( 'Amelia command failed.', 'harudigi-booking-abilities-for-amelia' );
 		}
 		if ( strlen( $message ) > 240 ) {

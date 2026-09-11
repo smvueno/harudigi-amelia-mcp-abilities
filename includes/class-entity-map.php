@@ -135,7 +135,7 @@ final class Entity_Map {
 				'delete'   => array( DeleteUserController::class, 'POST', 'delete' ),
 				'status'   => array( UpdateCustomerStatusController::class, 'POST' ),
 				'mutate'   => true,
-				'example'  => array( 'firstName' => 'MCP', 'lastName' => 'TestCustomer', 'email' => 'mcp-test@example.invalid', 'type' => 'customer', 'status' => 'visible', 'externalId' => -1 ),
+				'example'  => array( 'firstName' => 'MCP', 'lastName' => 'TestCustomer', 'email' => 'mcp-test@example.invalid', 'phone' => '0900000000', 'note' => 'Internal customer note', 'type' => 'customer', 'status' => 'visible' ),
 			),
 			'package'       => array(
 				'label'    => 'Package',

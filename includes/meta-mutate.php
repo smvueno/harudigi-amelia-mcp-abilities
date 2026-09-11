@@ -117,11 +117,20 @@ function meta_mutate( array $input = array() ) {
 		if ( 'resource' === $def['key'] ) {
 			$fields = prepare_resource_body( $fields );
 		}
+		if ( 'package' === $def['key'] ) {
+			$fields = prepare_package_body( $fields );
+		}
 		if ( 'custom_field' === $def['key'] ) {
 			$fields = prepare_custom_field_body( $fields, true );
 			$fields = array( 'customField' => $fields );
 		}
 		if ( 'service' === $def['key'] ) {
+			if ( empty( $fields['color'] ) ) {
+				$fields['color'] = '#1788FB';
+			}
+			if ( empty( $fields['status'] ) ) {
+				$fields['status'] = 'visible';
+			}
 			$fields = encode_service_json_fields( $fields );
 			if ( isset( $fields['customPricing'] ) ) {
 				$enc = normalize_custom_pricing_input( $fields['customPricing'] );
@@ -141,7 +150,7 @@ function meta_mutate( array $input = array() ) {
 		$patch = Helpers::body_from_input( $input, array( 'action', 'entity', 'id' ) );
 		if ( is_wp_error( $patch ) ) {
 			// Allow merge-only updates for entities that load existing rows.
-			if ( in_array( $def['key'], array( 'extra', 'custom_field', 'service', 'customer' ), true ) ) {
+			if ( in_array( $def['key'], array( 'extra', 'custom_field', 'service', 'customer', 'location', 'coupon', 'resource', 'category', 'package', 'employee' ), true ) ) {
 				$patch = array();
 			} else {
 				return $patch;
@@ -161,7 +170,19 @@ function meta_mutate( array $input = array() ) {
 			return Helpers::invoke( UpdateServiceController::class, $body, array( 'id' => $id ) );
 		}
 		if ( 'customer' === $def['key'] ) {
-			$patch = prepare_customer_body( $patch, false );
+			$existing_res = Helpers::invoke( $def['get'][0], array(), array( 'id' => $id ), 'GET' );
+			if ( is_wp_error( $existing_res ) ) {
+				return $existing_res;
+			}
+			$data     = isset( $existing_res['data'] ) && is_array( $existing_res['data'] ) ? $existing_res['data'] : $existing_res;
+			$existing = $data['user'] ?? $data['customer'] ?? $data;
+			if ( ! is_array( $existing ) ) {
+				return new \WP_Error( 'amelia_not_found', __( 'Customer not found.', 'harudigi-booking-abilities-for-amelia' ) );
+			}
+			// Amelia UpdateCustomer treats missing phone as clear; merge like extras.
+			$keep = array( 'status', 'type', 'firstName', 'lastName', 'birthday', 'email', 'phone', 'note', 'gender', 'countryPhoneIso', 'pictureFullPath', 'pictureThumbPath', 'translations', 'customFields' );
+			$base = array_intersect_key( $existing, array_flip( $keep ) );
+			$patch = prepare_customer_body( array_merge( $base, $patch ), false );
 			if ( is_wp_error( $patch ) ) {
 				return $patch;
 			}
@@ -201,6 +222,27 @@ function meta_mutate( array $input = array() ) {
 			}
 			$patch = $merged;
 		}
+		$merge_keys = array( 'location', 'coupon', 'resource', 'category', 'package', 'employee' );
+		if ( in_array( $def['key'], $merge_keys, true ) ) {
+			$existing = load_existing_entity( $def, $id );
+			if ( is_wp_error( $existing ) ) {
+				return $existing;
+			}
+			$patch = array_merge( $existing, $patch );
+			if ( 'location' === $def['key'] ) {
+				$patch = prepare_location_body( $patch );
+			} elseif ( 'coupon' === $def['key'] ) {
+				$patch = prepare_coupon_body( $patch );
+			} elseif ( 'resource' === $def['key'] ) {
+				$patch = prepare_resource_body( $patch );
+			} elseif ( 'category' === $def['key'] ) {
+				$patch = prepare_category_body( $patch );
+			} elseif ( 'package' === $def['key'] ) {
+				$patch = prepare_package_body( $patch );
+			} else {
+				$patch = Helpers::sanitize_write_body( $patch );
+			}
+		}
 		return Helpers::invoke( $def['update'][0], $patch, array( 'id' => $id ) );
 	}
 
@@ -234,9 +276,14 @@ function prepare_customer_body( array $fields, bool $creating = true ) {
 			$fields['email'] = $email;
 		}
 	}
+	if ( array_key_exists( 'note', $fields ) ) {
+		$fields['note'] = sanitize_textarea_field( (string) $fields['note'] );
+	}
 	$clean = Helpers::sanitize_write_body( $fields );
-	// Amelia requires externalId; MCP never links WP users — force unlinked sentinel.
-	$clean['externalId'] = -1;
+	// Create: Amelia wants externalId; MCP never links WP users. Update: do not send -1 (DB 409 + unlinks).
+	if ( $creating ) {
+		$clean['externalId'] = -1;
+	}
 	return $clean;
 }
 
@@ -259,7 +306,9 @@ function prepare_extra_body( array $fields ): array {
 	if ( isset( $fields['price'] ) ) {
 		$fields['price'] = (float) $fields['price'];
 	}
-	if ( isset( $fields['maxQuantity'] ) ) {
+	if ( ! isset( $fields['maxQuantity'] ) || ! is_numeric( $fields['maxQuantity'] ) || (int) $fields['maxQuantity'] <= 0 ) {
+		$fields['maxQuantity'] = 1;
+	} else {
 		$fields['maxQuantity'] = max( 1, (int) $fields['maxQuantity'] );
 	}
 	if ( isset( $fields['serviceId'] ) ) {
@@ -351,6 +400,79 @@ function prepare_resource_body( array $fields ): array {
 	if ( ! isset( $fields['entities'] ) || ! is_array( $fields['entities'] ) ) {
 		$fields['entities'] = array();
 	}
+	return $fields;
+}
+
+/**
+ * @param array<string,mixed> $def Entity map row with key + get.
+ * @return array<string,mixed>|\WP_Error
+ */
+function load_existing_entity( array $def, int $id ) {
+	if ( empty( $def['get'] ) ) {
+		return new \WP_Error( 'unsupported', __( 'Get-by-id not supported for this entity.', 'harudigi-booking-abilities-for-amelia' ) );
+	}
+	$res = Helpers::invoke( $def['get'][0], array(), array( 'id' => $id ), 'GET' );
+	if ( is_wp_error( $res ) ) {
+		return $res;
+	}
+	$data = isset( $res['data'] ) && is_array( $res['data'] ) ? $res['data'] : $res;
+	$row  = $data[ $def['key'] ] ?? $data['user'] ?? $data['customer'] ?? $data['provider'] ?? $data;
+	if ( ! is_array( $row ) ) {
+		return new \WP_Error( 'amelia_not_found', __( 'Entity not found.', 'harudigi-booking-abilities-for-amelia' ) );
+	}
+	return $row;
+}
+
+/**
+ * @param array<string,mixed> $fields
+ * @return array<string,mixed>
+ */
+function prepare_package_body( array $fields ): array {
+	$fields = Helpers::sanitize_write_body( $fields );
+	if ( empty( $fields['color'] ) ) {
+		$fields['color'] = '#1788FB';
+	}
+	if ( empty( $fields['status'] ) ) {
+		$fields['status'] = 'visible';
+	}
+	if ( ! isset( $fields['position'] ) || ! is_numeric( $fields['position'] ) || (int) $fields['position'] <= 0 ) {
+		$fields['position'] = 1;
+	}
+	if ( ! isset( $fields['discount'] ) ) {
+		$fields['discount'] = 0;
+	}
+	if ( ! array_key_exists( 'calculatedPrice', $fields ) ) {
+		$fields['calculatedPrice'] = false;
+	}
+	if ( empty( $fields['bookable'] ) || ! is_array( $fields['bookable'] ) ) {
+		$fields['bookable'] = array();
+		return $fields;
+	}
+	$norm = array();
+	$i    = 1;
+	foreach ( $fields['bookable'] as $row ) {
+		$sid = 0;
+		if ( is_array( $row ) ) {
+			$sid = (int) ( $row['serviceId'] ?? ( $row['service']['id'] ?? ( $row['id'] ?? 0 ) ) );
+		} else {
+			$sid = (int) $row;
+		}
+		if ( $sid <= 0 ) {
+			continue;
+		}
+		$norm[] = array(
+			'service'                => array( 'id' => $sid ),
+			'quantity'               => max( 1, (int) ( is_array( $row ) ? ( $row['quantity'] ?? 1 ) : 1 ) ),
+			'minimumScheduled'       => max( 1, (int) ( is_array( $row ) ? ( $row['minimumScheduled'] ?? ( $row['minimum'] ?? 1 ) ) : 1 ) ),
+			'maximumScheduled'       => max( 1, (int) ( is_array( $row ) ? ( $row['maximumScheduled'] ?? ( $row['maximum'] ?? 1 ) ) : 1 ) ),
+			'allowProviderSelection' => is_array( $row ) ? ! empty( $row['allowProviderSelection'] ) : false,
+			'providers'              => is_array( $row ) && ! empty( $row['providers'] ) && is_array( $row['providers'] ) ? $row['providers'] : array(),
+			'locations'              => is_array( $row ) && ! empty( $row['locations'] ) && is_array( $row['locations'] ) ? $row['locations'] : array(),
+			'position'               => (int) ( is_array( $row ) ? ( $row['position'] ?? $i ) : $i ),
+		);
+		++$i;
+	}
+	$fields['bookable'] = $norm;
 	return $fields;
 }
 
