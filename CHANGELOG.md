@@ -6,6 +6,16 @@ All notable changes to **HaruDigi Booking Abilities for Amelia and Easy MCP AI**
 
 Format: [Keep a Changelog](https://keepachangelog.com/) · versions match plugin `Version` / git tags `vX.Y.Z`.
 
+## [2.0.5] - 2026-09-11
+
+### Fixed
+- GitHub auto-updater authenticates with `HARUDIGI_GH_TOKEN` so private-repo releases are visible
+- Plugin-update cron / “Check again” no longer reuse a stale 6-hour GitHub cache
+- Updater installs the GitHub zip, not the wordpress.org zip that strips the updater
+
+### Upgrade notice
+GitHub updates work for private repos when `HARUDIGI_GH_TOKEN` is set in wp-config.php.
+
 ## [2.0.4] - 2026-09-11
 
 ### Fixed

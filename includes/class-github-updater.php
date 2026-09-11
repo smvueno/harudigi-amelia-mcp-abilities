@@ -1,26 +1,30 @@
 <?php
 /**
- * Native WordPress updates from public GitHub Releases.
+ * WordPress updates from GitHub Releases (public or private).
  *
- * Uses Update URI (update_plugins_github.com) plus a transient fallback so
- * updates still appear if the hostname filter is skipped.
+ * Private repos: define HARUDIGI_GH_TOKEN in wp-config.php (classic or fine-grained PAT
+ * with Contents + metadata read). Token is sent as Authorization only; never stored in
+ * the update transient package URL.
  *
  * @package Harudigi_Amelia_MCP_Abilities
  */
 
 namespace Harudigi_Amelia_MCP_Abilities;
 
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
+
 final class GitHub_Updater {
 
 	const REPO  = 'smvueno/harudigi-amelia-mcp-abilities';
 	const HOST  = 'github.com';
 	const CACHE = 'harudigi_amelia_mcp_gh_release';
-	const TTL   = HOUR_IN_SECONDS * 6;
+	const TTL   = 15 * MINUTE_IN_SECONDS;
 	const SLUG  = 'harudigi-booking-abilities-for-amelia';
+
+	/** @var array<string,mixed>|false|null */
+	private static $memo = null;
 
 	public static function init(): void {
 		$update_uri = (string) ( get_file_data( HARUDIGI_AMELIA_MCP_FILE, array( 'UpdateURI' => 'Update URI' ), 'plugin' )['UpdateURI'] ?? '' );
@@ -31,6 +35,35 @@ final class GitHub_Updater {
 		add_filter( 'update_plugins_' . self::HOST, array( __CLASS__, 'check' ), 10, 4 );
 		add_filter( 'pre_set_site_transient_update_plugins', array( __CLASS__, 'inject_transient' ), 20 );
 		add_filter( 'upgrader_source_selection', array( __CLASS__, 'fix_source_dir' ), 10, 4 );
+		add_filter( 'http_request_args', array( __CLASS__, 'auth_request' ), 10, 2 );
+		add_action( 'delete_site_transient_update_plugins', array( __CLASS__, 'bust_cache' ) );
+	}
+
+	public static function bust_cache(): void {
+		self::$memo = null;
+		delete_transient( self::CACHE );
+	}
+
+	/**
+	 * @param array<string,mixed> $args Request args.
+	 */
+	public static function auth_request( array $args, string $url ): array {
+		$token = self::token();
+		if ( '' === $token || ! self::is_our_url( $url ) ) {
+			return $args;
+		}
+
+		if ( ! isset( $args['headers'] ) || ! is_array( $args['headers'] ) ) {
+			$args['headers'] = array();
+		}
+
+		$args['headers']['Authorization'] = 'Bearer ' . $token;
+		if ( false !== strpos( $url, '/releases/assets/' ) ) {
+			$args['headers']['Accept'] = 'application/octet-stream';
+		}
+		$args['timeout'] = max( (int) ( $args['timeout'] ?? 15 ), 30 );
+
+		return $args;
 	}
 
 	/**
@@ -53,8 +86,6 @@ final class GitHub_Updater {
 	}
 
 	/**
-	 * Fallback: inject into the update transient (covers hosts that skip Update URI).
-	 *
 	 * @param object|mixed $transient Update transient.
 	 * @return object|mixed
 	 */
@@ -68,6 +99,9 @@ final class GitHub_Updater {
 		if ( ! isset( $transient->no_update ) || ! is_array( $transient->no_update ) ) {
 			$transient->no_update = array();
 		}
+
+		// WP cron / Check again rebuilds this transient; do not reuse a stale GitHub payload.
+		self::bust_cache();
 
 		$plugin_file = plugin_basename( HARUDIGI_AMELIA_MCP_FILE );
 		$installed   = HARUDIGI_AMELIA_MCP_VERSION;
@@ -104,9 +138,6 @@ final class GitHub_Updater {
 	}
 
 	/**
-	 * Always return latest release metadata when GitHub is reachable.
-	 * WordPress decides response vs no_update via version_compare.
-	 *
 	 * @return array<string,string>|false
 	 */
 	private static function update_payload() {
@@ -181,12 +212,26 @@ final class GitHub_Updater {
 	 * @return array<string,mixed>|null
 	 */
 	private static function latest_release(): ?array {
+		if ( null !== self::$memo ) {
+			return false === self::$memo ? null : self::$memo;
+		}
+
 		$cached = get_transient( self::CACHE );
 		if ( is_array( $cached ) ) {
 			if ( ! empty( $cached['_failed'] ) ) {
+				self::$memo = false;
 				return null;
 			}
+			self::$memo = $cached;
 			return $cached;
+		}
+
+		$headers = array(
+			'Accept' => 'application/vnd.github+json',
+		);
+		$token   = self::token();
+		if ( '' !== $token ) {
+			$headers['Authorization'] = 'Bearer ' . $token;
 		}
 
 		$response = wp_remote_get(
@@ -194,28 +239,31 @@ final class GitHub_Updater {
 			array(
 				'timeout'    => 15,
 				'user-agent' => 'HaruDigi-Amelia-MCP-Abilities/' . HARUDIGI_AMELIA_MCP_VERSION . '; ' . home_url( '/' ),
-				'headers'    => array(
-					'Accept' => 'application/vnd.github+json',
-				),
+				'headers'    => $headers,
 			)
 		);
 
 		if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
-			set_transient( self::CACHE, array( '_failed' => 1 ), 15 * MINUTE_IN_SECONDS );
+			set_transient( self::CACHE, array( '_failed' => 1 ), self::TTL );
+			self::$memo = false;
 			return null;
 		}
 
 		$data = json_decode( (string) wp_remote_retrieve_body( $response ), true );
 		if ( ! is_array( $data ) || empty( $data['tag_name'] ) ) {
-			set_transient( self::CACHE, array( '_failed' => 1 ), 15 * MINUTE_IN_SECONDS );
+			set_transient( self::CACHE, array( '_failed' => 1 ), self::TTL );
+			self::$memo = false;
 			return null;
 		}
 
 		set_transient( self::CACHE, $data, self::TTL );
+		self::$memo = $data;
 		return $data;
 	}
 
 	/**
+	 * GitHub zip only — never the wordpress.org strip (`*-wporg.zip`).
+	 *
 	 * @param array<string,mixed> $release Release payload.
 	 */
 	private static function zip_url( array $release ): string {
@@ -225,12 +273,47 @@ final class GitHub_Updater {
 				continue;
 			}
 			$name = (string) ( $asset['name'] ?? '' );
-			$url  = (string) ( $asset['browser_download_url'] ?? '' );
-			if ( $url && preg_match( '/harudigi-booking-abilities-for-amelia.*\.zip$/i', $name ) ) {
+			if ( false !== stripos( $name, '-wporg' ) ) {
+				continue;
+			}
+			if ( ! preg_match( '/^harudigi-booking-abilities-for-amelia-.+\.zip$/i', $name ) ) {
+				continue;
+			}
+
+			$id = (int) ( $asset['id'] ?? 0 );
+			if ( $id && '' !== self::token() ) {
+				return 'https://api.github.com/repos/' . self::REPO . '/releases/assets/' . $id;
+			}
+
+			$url = (string) ( $asset['browser_download_url'] ?? '' );
+			if ( $url ) {
 				return $url;
 			}
 		}
 
 		return (string) ( $release['zipball_url'] ?? '' );
+	}
+
+	private static function token(): string {
+		if ( defined( 'HARUDIGI_GH_TOKEN' ) && is_string( HARUDIGI_GH_TOKEN ) && '' !== HARUDIGI_GH_TOKEN ) {
+			return HARUDIGI_GH_TOKEN;
+		}
+		return '';
+	}
+
+	private static function is_our_url( string $url ): bool {
+		$host = (string) wp_parse_url( $url, PHP_URL_HOST );
+		$path = (string) wp_parse_url( $url, PHP_URL_PATH );
+		$repo = '/' . self::REPO;
+
+		if ( 'api.github.com' === $host ) {
+			return false !== strpos( $path, '/repos/' . self::REPO );
+		}
+
+		if ( 'github.com' === $host ) {
+			return false !== strpos( $path, $repo );
+		}
+
+		return false;
 	}
 }

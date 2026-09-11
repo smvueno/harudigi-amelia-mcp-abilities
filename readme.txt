@@ -4,7 +4,7 @@ Tags: amelia, booking, mcp, ai, abilities
 Requires at least: 6.9
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.0.4
+Stable tag: 2.0.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,11 @@ Leave `notify` / `notifyParticipants` unset or false (the default). Only set tru
 
 == Changelog ==
 
+= 2.0.5 =
+* Fixed: GitHub auto-updater authenticates with `HARUDIGI_GH_TOKEN` so private-repo releases are visible
+* Fixed: Plugin-update cron / “Check again” no longer reuse a stale 6-hour GitHub cache
+* Fixed: Updater installs the GitHub zip, not the wordpress.org zip that strips the updater
+
 = 2.0.4 =
 * Fixed: Customer notes and other customer fields can be updated (`amelia/mutate`); previously every customer update failed with 409
 * Fixed: Name-only (patch) updates for location, coupon, resource, category, package, employee, and events no longer fail Amelia mandatory-field checks
@@ -116,6 +121,9 @@ Leave `notify` / `notifyParticipants` unset or false (the default). Only set tru
 * Fixed: Appointment extras dropped on update
 
 == Upgrade Notice ==
+
+= 2.0.5 =
+GitHub updates work for private repos when `HARUDIGI_GH_TOKEN` is set in wp-config.php.
 
 = 2.0.4 =
 Customer notes and catalog/event patch updates work via `amelia/mutate` and `amelia/book`.
