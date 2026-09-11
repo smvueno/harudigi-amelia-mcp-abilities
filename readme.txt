@@ -4,7 +4,7 @@ Tags: amelia, booking, mcp, ai, abilities
 Requires at least: 6.9
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.0.5
+Stable tag: 2.0.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,10 @@ Leave `notify` / `notifyParticipants` unset or false (the default). Only set tru
 
 == Changelog ==
 
+= 2.0.6 =
+* Fixed: GitHub updater checks public Releases first; `HARUDIGI_GH_TOKEN` is optional and only used if the repo is private
+* Fixed: Public installs get the GitHub zip URL (`/releases/download/…`), not the private asset API
+
 = 2.0.5 =
 * Fixed: GitHub auto-updater authenticates with `HARUDIGI_GH_TOKEN` so private-repo releases are visible
 * Fixed: Plugin-update cron / “Check again” no longer reuse a stale 6-hour GitHub cache
@@ -121,6 +125,9 @@ Leave `notify` / `notifyParticipants` unset or false (the default). Only set tru
 * Fixed: Appointment extras dropped on update
 
 == Upgrade Notice ==
+
+= 2.0.6 =
+GitHub auto-updates work for the public repo with no token; HARUDIGI_GH_TOKEN remains optional for private repos.
 
 = 2.0.5 =
 GitHub updates work for private repos when `HARUDIGI_GH_TOKEN` is set in wp-config.php.

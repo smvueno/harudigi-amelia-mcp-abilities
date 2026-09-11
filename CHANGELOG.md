@@ -6,6 +6,15 @@ All notable changes to **HaruDigi Booking Abilities for Amelia and Easy MCP AI**
 
 Format: [Keep a Changelog](https://keepachangelog.com/) · versions match plugin `Version` / git tags `vX.Y.Z`.
 
+## [2.0.6] - 2026-09-11
+
+### Fixed
+- GitHub updater checks public Releases first; `HARUDIGI_GH_TOKEN` is optional and only used if the repo is private
+- Public installs get the GitHub zip URL (`/releases/download/…`), not the private asset API
+
+### Upgrade notice
+GitHub auto-updates work for the public repo with no token; HARUDIGI_GH_TOKEN remains optional for private repos.
+
 ## [2.0.5] - 2026-09-11
 
 ### Fixed

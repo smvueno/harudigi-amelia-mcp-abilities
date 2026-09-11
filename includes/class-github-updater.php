@@ -1,10 +1,10 @@
 <?php
 /**
- * WordPress updates from GitHub Releases (public or private).
+ * WordPress updates from GitHub Releases.
  *
- * Private repos: define HARUDIGI_GH_TOKEN in wp-config.php (classic or fine-grained PAT
- * with Contents + metadata read). Token is sent as Authorization only; never stored in
- * the update transient package URL.
+ * Public repo (current): no token needed. HARUDIGI_GH_TOKEN in wp-config.php is
+ * optional (rate limit / if the repo is later made private). Token is never stored
+ * in the update transient package URL.
  *
  * @package Harudigi_Amelia_MCP_Abilities
  */
@@ -26,6 +26,9 @@ final class GitHub_Updater {
 	/** @var array<string,mixed>|false|null */
 	private static $memo = null;
 
+	/** True when /releases/latest required HARUDIGI_GH_TOKEN (private repo). */
+	private static $used_auth = false;
+
 	public static function init(): void {
 		$update_uri = (string) ( get_file_data( HARUDIGI_AMELIA_MCP_FILE, array( 'UpdateURI' => 'Update URI' ), 'plugin' )['UpdateURI'] ?? '' );
 		if ( $update_uri && false !== stripos( $update_uri, 'wordpress.org' ) ) {
@@ -40,7 +43,8 @@ final class GitHub_Updater {
 	}
 
 	public static function bust_cache(): void {
-		self::$memo = null;
+		self::$memo      = null;
+		self::$used_auth = false;
 		delete_transient( self::CACHE );
 	}
 
@@ -226,11 +230,37 @@ final class GitHub_Updater {
 			return $cached;
 		}
 
+		// Public first — token is optional. A bad PAT must not hide public releases.
+		$data            = self::get_latest( false );
+		self::$used_auth = false;
+		if ( ! $data && '' !== self::token() ) {
+			$data            = self::get_latest( true );
+			self::$used_auth = (bool) $data;
+		}
+
+		if ( ! $data ) {
+			set_transient( self::CACHE, array( '_failed' => 1 ), self::TTL );
+			self::$memo = false;
+			return null;
+		}
+
+		set_transient( self::CACHE, $data, self::TTL );
+		self::$memo = $data;
+		return $data;
+	}
+
+	/**
+	 * @return array<string,mixed>|null
+	 */
+	private static function get_latest( bool $auth ): ?array {
 		$headers = array(
 			'Accept' => 'application/vnd.github+json',
 		);
-		$token   = self::token();
-		if ( '' !== $token ) {
+		if ( $auth ) {
+			$token = self::token();
+			if ( '' === $token ) {
+				return null;
+			}
 			$headers['Authorization'] = 'Bearer ' . $token;
 		}
 
@@ -244,20 +274,14 @@ final class GitHub_Updater {
 		);
 
 		if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
-			set_transient( self::CACHE, array( '_failed' => 1 ), self::TTL );
-			self::$memo = false;
 			return null;
 		}
 
 		$data = json_decode( (string) wp_remote_retrieve_body( $response ), true );
 		if ( ! is_array( $data ) || empty( $data['tag_name'] ) ) {
-			set_transient( self::CACHE, array( '_failed' => 1 ), self::TTL );
-			self::$memo = false;
 			return null;
 		}
 
-		set_transient( self::CACHE, $data, self::TTL );
-		self::$memo = $data;
 		return $data;
 	}
 
@@ -280,12 +304,14 @@ final class GitHub_Updater {
 				continue;
 			}
 
-			$id = (int) ( $asset['id'] ?? 0 );
-			if ( $id && '' !== self::token() ) {
+			$id  = (int) ( $asset['id'] ?? 0 );
+			$url = (string) ( $asset['browser_download_url'] ?? '' );
+
+			// Private repo: browser URL 404s; GitHub asset API needs the token.
+			if ( self::$used_auth && $id ) {
 				return 'https://api.github.com/repos/' . self::REPO . '/releases/assets/' . $id;
 			}
 
-			$url = (string) ( $asset['browser_download_url'] ?? '' );
 			if ( $url ) {
 				return $url;
 			}
