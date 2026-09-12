@@ -71,7 +71,8 @@ function meta_pay( array $input = array() ) {
 			return $id;
 		}
 		$gateway = sanitize_text_field( (string) ( $input['gateway'] ?? 'stripe' ) );
-		return generate_payment_link( $id, $gateway );
+		$amount  = $input['amount'] ?? ( isset( $input['fields']['amount'] ) ? $input['fields']['amount'] : null );
+		return generate_payment_link( $id, $gateway, $amount );
 	}
 
 	return new \WP_Error( 'invalid_action', __( 'pay action must be list|get|add|update|delete|link.', 'harudigi-booking-abilities-for-amelia' ) );

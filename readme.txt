@@ -4,7 +4,7 @@ Tags: amelia, booking, mcp, ai, abilities
 Requires at least: 6.9
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.0.7
+Stable tag: 2.0.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -84,6 +84,14 @@ Leave `notify` / `notifyParticipants` unset or false (the default). Only set tru
 
 == Changelog ==
 
+= 2.0.8 =
+* Added: `amelia/pay action=link` accepts `amount` (JPY) or `amount:"half"` for partial Stripe Checkout links
+* Added: Link response includes `chargedAmount`, `remainingAfter`, `bookingTotal`, `paidSoFar`
+* Added: `amelia/help` `workflow_pay` for full/half links, cash remainder, and Stripe remainder
+* Added: Direct Stripe Checkout URLs (`buy.stripe.com`) returned for client send (not Amelia site wrappers)
+* Fixed: `fields` + top-level args merge on writes (e.g. `customerBookingId` with nested `amount`)
+* Fixed: Partial payment links bake the correct `chargedAmount` into Amelia’s callback so half-pay records and emails show the deposit, not the full total
+
 = 2.0.7 =
 * Added: `amelia/book` `action=notify` (alias `resend`) sends customer status emails for an appointment without changing status/time — requires `confirm:true`
 * Added: Help / discover docs clarify that `notify:true` is a lifecycle gate only; templates must be enabled in Amelia
@@ -137,6 +145,9 @@ Leave `notify` / `notifyParticipants` unset or false (the default). Only set tru
 * Fixed: Appointment extras dropped on update
 
 == Upgrade Notice ==
+
+= 2.0.8 =
+Use `amelia/pay action=link amount=half` (or a JPY amount) for deposit links; send the returned Stripe URL to the client.
 
 = 2.0.7 =
 Use `amelia/book action=notify id=… confirm:true` to manually email customers for the current booking status.

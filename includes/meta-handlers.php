@@ -206,7 +206,7 @@ function register_meta_abilities(): void {
 		array(
 			'label'        => __( 'Amelia Payments', 'harudigi-booking-abilities-for-amelia' ),
 			'description'  => __(
-				'Money control: list/get/add/update/delete payments and payment links. Does NOT charge cards — records bookkeeping / generates links. delete requires confirm:true. Actions: list, get, add, update, delete, link. Gateways: onSite, stripe, payPal, wc, mollie, razorpay, square. Statuses: paid, pending, partiallyPaid, refunded.',
+				'Money control: list/get/add/update/delete payments and payment links. Does NOT charge cards — records bookkeeping / generates Checkout URLs. link returns buy.stripe.com (send that to the client). Optional amount (JPY) or amount:"half" for partial. delete requires confirm:true. Actions: list, get, add, update, delete, link. Gateways: onSite, stripe, payPal, wc, mollie, razorpay, square. Statuses: paid, pending, partiallyPaid, refunded.',
 				'harudigi-booking-abilities-for-amelia'
 			),
 			'callback'     => __NAMESPACE__ . '\\meta_pay',
@@ -223,7 +223,7 @@ function register_meta_abilities(): void {
 					'fields'      => array( 'type' => 'object' ),
 					'gateway'     => array( 'type' => 'string' ),
 					'status'      => array( 'type' => 'string' ),
-					'amount'      => array( 'type' => 'number' ),
+					'amount'      => array( 'type' => 'string', 'description' => 'For add/update: JPY number. For link: JPY number or "half". Omit on link = full remaining.' ),
 					'confirm'     => array( 'type' => 'boolean' ),
 					'page'        => array( 'type' => 'integer' ),
 					'limit'       => array( 'type' => 'integer' ),
@@ -251,6 +251,14 @@ function meta_help( array $input = array() ) {
 			'2' => 'amelia/query action=availability serviceId=N startDateTime=...',
 			'3' => 'amelia/book action=create serviceId providerId customerId bookingStart extras customFields — omit status (uses site default); leave notify false unless human said yes.',
 			'4' => 'Manual resend: amelia/book action=notify id=APPOINTMENT_ID confirm:true — sends customer status email now (Amelia template must be enabled).',
+		),
+		'workflow_pay'  => array(
+			'full_link'   => 'amelia/pay action=link id=PAYMENT_ID gateway=stripe — returns buy.stripe.com URL for full remaining. Send that URL to the client (not an Amelia site link).',
+			'half_link'   => 'amelia/pay action=link id=PAYMENT_ID gateway=stripe amount=half — or amount=<JPY>. chargedAmount is what Checkout collects.',
+			'after_pay'   => 'When client pays: payment → paid; if Payment Links auto-approve is on, appointment → approved and customer gets approved email (amount paid should appear in the template).',
+			'cash_rest'   => 'Balance in cash: amelia/pay action=add customerBookingId=… amount=REMAINING gateway=onSite status=paid',
+			'stripe_rest' => 'Balance via Stripe: amelia/pay action=link id=PENDING_PAYMENT_ID gateway=stripe (omit amount = remaining).',
+			'send'        => 'Always send paymentLink from the response (Stripe Checkout). Never invent amounts.',
 		),
 		'safety'      => array(
 			'notify_default'          => false,

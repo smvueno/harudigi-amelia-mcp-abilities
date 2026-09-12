@@ -272,19 +272,16 @@ final class Helpers {
 	 * @return array<string, mixed>|\WP_Error
 	 */
 	public static function body_from_input( array $input, array $strip = array() ) {
-		if ( isset( $input['fields'] ) && is_array( $input['fields'] ) ) {
-			$body = self::sanitize_write_body( $input['fields'] );
-			if ( ! $body ) {
-				return new \WP_Error( 'invalid_fields', __( 'Provide fields (or a fields object).', 'harudigi-booking-abilities-for-amelia' ) );
-			}
-			return $body;
+		$strip = array_merge( $strip, array( 'confirm', 'include_bulk', 'fields' ) );
+		$flat  = $input;
+		unset( $flat['fields'] );
+		foreach ( $strip as $key ) {
+			unset( $flat[ $key ] );
 		}
-		$body = $input;
-		unset( $body['fields'] );
-		foreach ( array_merge( $strip, array( 'confirm', 'include_bulk' ) ) as $key ) {
-			unset( $body[ $key ] );
-		}
-		$body = self::sanitize_write_body( $body );
+		// Merge fields onto top-level so customerBookingId/amount/status work either place.
+		$nested = ( isset( $input['fields'] ) && is_array( $input['fields'] ) ) ? $input['fields'] : array();
+		$body   = array_merge( $flat, $nested );
+		$body   = self::sanitize_write_body( $body );
 		if ( ! $body ) {
 			return new \WP_Error( 'invalid_fields', __( 'Provide fields (or a fields object).', 'harudigi-booking-abilities-for-amelia' ) );
 		}

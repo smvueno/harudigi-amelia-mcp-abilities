@@ -6,6 +6,21 @@ All notable changes to **HaruDigi Booking Abilities for Amelia and Easy MCP AI**
 
 Format: [Keep a Changelog](https://keepachangelog.com/) · versions match plugin `Version` / git tags `vX.Y.Z`.
 
+## [2.0.8] - 2026-09-12
+
+### Added
+- `amelia/pay action=link` accepts `amount` (JPY) or `amount:"half"` for partial Stripe Checkout links
+- Link response includes `chargedAmount`, `remainingAfter`, `bookingTotal`, `paidSoFar`
+- `amelia/help` `workflow_pay` for full/half links, cash remainder, and Stripe remainder
+- Direct Stripe Checkout URLs (`buy.stripe.com`) returned for client send (not Amelia site wrappers)
+
+### Fixed
+- `fields` + top-level args merge on writes (e.g. `customerBookingId` with nested `amount`)
+- Partial payment links bake the correct `chargedAmount` into Amelia’s callback so half-pay records and emails show the deposit, not the full total
+
+### Upgrade notice
+Use `amelia/pay action=link amount=half` (or a JPY amount) for deposit links; send the returned Stripe URL to the client.
+
 ## [2.0.7] - 2026-09-12
 
 ### Added

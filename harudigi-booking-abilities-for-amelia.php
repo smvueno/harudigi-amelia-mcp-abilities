@@ -3,7 +3,7 @@
  * Plugin Name:       HaruDigi Booking Abilities for Amelia and Easy MCP AI
  * Plugin URI:        https://smvueno.github.io/harudigi-amelia-mcp-abilities/
  * Description:       Compact Amelia admin MCP tools for Easy MCP AI (≤7 meta abilities). Independent plugin by HaruDigi — not affiliated with or endorsed by TMS Software.
- * Version:           2.0.7
+ * Version:           2.0.8
  * Requires at least: 6.9
  * Requires PHP:      7.4
  * Requires Plugins:  easy-mcp-ai
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'HARUDIGI_AMELIA_MCP_VERSION', '2.0.7' );
+define( 'HARUDIGI_AMELIA_MCP_VERSION', '2.0.8' );
 define( 'HARUDIGI_AMELIA_MCP_FILE', __FILE__ );
 define( 'HARUDIGI_AMELIA_MCP_DIR', plugin_dir_path( __FILE__ ) );
 define( 'HARUDIGI_AMELIA_MCP_MIN_AMELIA', '9.7' );
