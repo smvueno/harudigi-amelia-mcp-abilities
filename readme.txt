@@ -4,7 +4,7 @@ Tags: amelia, booking, mcp, ai, abilities
 Requires at least: 6.9
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.0.6
+Stable tag: 2.0.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -72,13 +72,25 @@ Easy MCP AI is the MCP host. This plugin adds Amelia abilities to that host.
 
 = How do I book without emailing the customer? =
 
-Leave `notify` / `notifyParticipants` unset or false (the default). Only set true after the human approves.
+Leave `notify` / `notifyParticipants` unset or false (the default). Only set true after the human approves. That flag only allows mail on create/status events — it does not send by itself.
+
+= How do I send a customer email for an existing booking? =
+
+`amelia/book` with `action=notify` (or `resend`), appointment `id`, and `confirm:true`. Optional `booking_id`. The matching customer status template must be enabled in Amelia → Notifications.
 
 = How do payment links work? =
 
 `amelia/pay` with `action=link` returns a checkout URL for the appointment’s remaining balance. Card checkout in a browser is out of scope for MCP.
 
 == Changelog ==
+
+= 2.0.7 =
+* Added: `amelia/book` `action=notify` (alias `resend`) sends customer status emails for an appointment without changing status/time — requires `confirm:true`
+* Added: Help / discover docs clarify that `notify:true` is a lifecycle gate only; templates must be enabled in Amelia
+* Fixed: `action=update` no longer permanently clears `notifyParticipants` (was killing reminders); omitted notify mutes that edit then restores the prior flag
+* Fixed: Multi-booking updates keep sibling bookings in the payload (patch first, or `booking_id` when set)
+* Fixed: Manual notify is email-only and errors when no enabled customer template matches
+* Fixed: `waiting` accepted as a booking status; confirm message for notify is non-deletion wording
 
 = 2.0.6 =
 * Fixed: GitHub updater checks public Releases first; `HARUDIGI_GH_TOKEN` is optional and only used if the repo is private
@@ -125,6 +137,9 @@ Leave `notify` / `notifyParticipants` unset or false (the default). Only set tru
 * Fixed: Appointment extras dropped on update
 
 == Upgrade Notice ==
+
+= 2.0.7 =
+Use `amelia/book action=notify id=… confirm:true` to manually email customers for the current booking status.
 
 = 2.0.6 =
 GitHub auto-updates work for the public repo with no token; HARUDIGI_GH_TOKEN remains optional for private repos.

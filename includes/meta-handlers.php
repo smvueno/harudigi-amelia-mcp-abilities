@@ -155,7 +155,7 @@ function register_meta_abilities(): void {
 		array(
 			'label'        => __( 'Book / Manage Appointments', 'harudigi-booking-abilities-for-amelia' ),
 			'description'  => __(
-				'Create/update/cancel appointments and events. SAFETY: notify defaults FALSE — ask the human before notify:true (emails customers). status: omit to use Amelia Settings → defaultAppointmentStatus; never assume approved. Extras: [{extraId,quantity}]. Custom fields: simple map {"3":"Gion","4":"WhatsApp"} (field id → value) or full Amelia objects. Create needs: serviceId, providerId, customerId, bookingStart (YYYY-MM-DD HH:mm). Call amelia/query action=booking_options first. Cancel/delete need confirm:true. Actions: create, update, cancel, delete, set_status, create_event, update_event, delete_event, book_event.',
+				'Create/update/cancel appointments and events. SAFETY: notify defaults FALSE — ask the human before notify:true (emails customers). notify/resend action sends customer status emails now (needs confirm:true; Amelia template must be enabled). status: omit to use Amelia Settings → defaultAppointmentStatus; never assume approved. Extras: [{extraId,quantity}]. Custom fields: simple map {"3":"Gion","4":"WhatsApp"} (field id → value) or full Amelia objects. Create needs: serviceId, providerId, customerId, bookingStart (YYYY-MM-DD HH:mm). Call amelia/query action=booking_options first. Cancel/delete/notify need confirm:true. Actions: create, update, cancel, delete, set_status, notify, create_event, update_event, delete_event, book_event.',
 				'harudigi-booking-abilities-for-amelia'
 			),
 			'callback'     => __NAMESPACE__ . '\\meta_book',
@@ -167,8 +167,8 @@ function register_meta_abilities(): void {
 				'additionalProperties' => true,
 				'required'             => array( 'action' ),
 				'properties'           => array(
-					'action'             => array( 'type' => 'string' ),
-					'id'                 => array( 'type' => 'integer', 'description' => 'Appointment/event id for update/cancel/delete.' ),
+					'action'             => array( 'type' => 'string', 'description' => 'create|update|cancel|delete|set_status|notify|resend|create_event|update_event|delete_event|book_event' ),
+					'id'                 => array( 'type' => 'integer', 'description' => 'Appointment/event id for update/cancel/delete/notify.' ),
 					'serviceId'          => array( 'type' => 'integer' ),
 					'providerId'         => array( 'type' => 'integer' ),
 					'customerId'         => array( 'type' => 'integer' ),
@@ -177,7 +177,8 @@ function register_meta_abilities(): void {
 					'persons'            => array( 'type' => 'integer' ),
 					'duration'           => array( 'type' => array( 'integer', 'string' ), 'description' => 'Seconds or "1h"/"90m".' ),
 					'status'             => array( 'type' => 'string', 'description' => 'approved|pending|canceled|rejected|no-show. Omit → site default.' ),
-					'notify'             => array( 'type' => 'boolean', 'description' => 'Default false. Ask human before true.' ),
+					'notify'             => array( 'type' => 'boolean', 'description' => 'Default false. Ask human before true. On create/set_status only gates mail — does not send by itself.' ),
+					'booking_id'         => array( 'type' => 'integer', 'description' => 'Optional customer booking id (set_status / notify).' ),
 					'internalNotes'      => array( 'type' => 'string' ),
 					'extras'             => array(
 						'type'        => 'array',
@@ -192,7 +193,7 @@ function register_meta_abilities(): void {
 					'couponCode'         => array( 'type' => 'string' ),
 					'fields'             => array( 'type' => 'object', 'description' => 'Partial update body for update action.' ),
 					'replaceCustomFields'=> array( 'type' => 'boolean' ),
-					'confirm'            => array( 'type' => 'boolean' ),
+					'confirm'            => array( 'type' => 'boolean', 'description' => 'Required true for cancel|delete|notify.' ),
 					'eventId'            => array( 'type' => 'integer' ),
 					'payment'            => array( 'type' => 'object' ),
 				),
@@ -249,12 +250,19 @@ function meta_help( array $input = array() ) {
 			'1' => 'amelia/query action=booking_options serviceId=N — get extras + custom field ids.',
 			'2' => 'amelia/query action=availability serviceId=N startDateTime=...',
 			'3' => 'amelia/book action=create serviceId providerId customerId bookingStart extras customFields — omit status (uses site default); leave notify false unless human said yes.',
+			'4' => 'Manual resend: amelia/book action=notify id=APPOINTMENT_ID confirm:true — sends customer status email now (Amelia template must be enabled).',
 		),
 		'safety'      => array(
 			'notify_default'          => false,
 			'ask_before_notify_true'  => true,
+			'notify_flag_is_gate'     => 'notify:true on create/set_status only allows mail on that lifecycle event; does not send by itself.',
+			'manual_send'             => 'action=notify|resend + confirm:true (email only)',
+			'templates_gate'          => 'Customer emails require enabled templates in Amelia → Notifications (query entity=notification to list).',
+			'provider_mail'           => 'Provider status emails ignore booking notifyParticipants when those templates are enabled.',
+			'update_notify'           => 'Omit notify on update → mute this edit’s customer emails but restore prior notifyParticipants (reminders stay). Pass notify:true|false to set the stored flag.',
 			'status_when_omitted'     => 'Amelia Settings → general.defaultAppointmentStatus',
 			'deletes_need_confirm'    => true,
+			'notify_needs_confirm'    => true,
 			'test_with_fake_customer' => true,
 		),
 		'shapes'      => array(
@@ -315,7 +323,7 @@ function meta_discover( array $input = array() ) {
 	if ( in_array( $def['key'], array( 'appointment', 'event' ), true ) ) {
 		$actions = array( 'list', 'get', 'use amelia/book for writes' );
 	}
-	return array(
+	$out = array(
 		'entity'  => $def['key'],
 		'label'   => $def['label'],
 		'actions' => $actions,
@@ -326,6 +334,19 @@ function meta_discover( array $input = array() ) {
 		'example' => $def['example'] ?? null,
 		'note'    => $def['note'] ?? null,
 	);
+	if ( 'appointment' === $def['key'] ) {
+		$out['book_actions'] = array( 'create', 'update', 'cancel', 'delete', 'set_status', 'notify' );
+		$out['notify']       = array(
+			'action'  => 'notify',
+			'needs'   => array( 'id', 'confirm:true' ),
+			'optional'=> array( 'booking_id' ),
+			'effect'  => 'Sends customer status emails for current status; template must be enabled in Amelia.',
+		);
+	}
+	if ( 'notification' === $def['key'] ) {
+		$out['note'] = 'List only. Enable/disable templates in Amelia admin — MCP cannot flip them. Enabled status templates are required for customer email.';
+	}
+	return $out;
 }
 
 /** @param array<string,mixed> $input @return array<string,mixed>|\WP_Error */

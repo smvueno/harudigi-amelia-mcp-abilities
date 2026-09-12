@@ -11,7 +11,7 @@ Query, mutate, book, and pay without flooding agent context. Independent plugin 
 
 **Docs:** [smvueno.github.io/harudigi-amelia-mcp-abilities](https://smvueno.github.io/harudigi-amelia-mcp-abilities/)  
 **Author:** Jens Madsen · **Brand:** HaruDigi · **Site:** [harudigi.com](https://harudigi.com)  
-**Install slug:** `harudigi-booking-abilities-for-amelia` · **Version:** 2.0.3
+**Install slug:** `harudigi-booking-abilities-for-amelia` · **Version:** 2.0.7
 
 ---
 
@@ -35,14 +35,15 @@ Query, mutate, book, and pay without flooding agent context. Independent plugin 
 
 ### Booking (`amelia/book`)
 
-Actions: `create`, `update`, `cancel`, `delete`, `set_status`, `create_event`, `update_event`, `delete_event`, `book_event`.
+Actions: `create`, `update`, `cancel`, `delete`, `set_status`, `notify`, `create_event`, `update_event`, `delete_event`, `book_event`.
 
 - **Create needs:** `serviceId`, `providerId`, `customerId`, `bookingStart` (`YYYY-MM-DD HH:mm`)
 - Prefer `amelia/query` `booking_options` + `availability` first
 - **Extras:** `[{ "extraId": 1, "quantity": 2 }]`
 - **Custom fields:** simple map `{"3":"Gion"}` (field id → value) or full Amelia objects; updates merge unless `replaceCustomFields: true`
 - **`status` omitted** → Amelia Settings → `defaultAppointmentStatus` (never assume `approved`)
-- **`notify` / `notifyParticipants` default `false`** — ask the human before `true`
+- **`notify` / `notifyParticipants` default `false`** — ask the human before `true` (gate on create/status events only; does not send by itself)
+- **`action=notify`** (alias `resend`) + `confirm:true` — send customer status emails now for appointment `id` (optional `booking_id`). Amelia template for that status must be **enabled**.
 
 ### Payments (`amelia/pay`)
 
@@ -72,9 +73,10 @@ Actions: `list`, `get`, `add`, `update`, `delete`, `link`.
 
 ## Safety
 
-- `notify` defaults **false**
+- `notify` defaults **false** (lifecycle gate only — not a send button)
+- Manual send: `amelia/book` `action=notify` + `confirm:true`
 - Booking `status` omitted → site `defaultAppointmentStatus`
-- Deletes / cancel require `confirm: true`
+- Deletes / cancel / notify require `confirm: true`
 - Secrets redacted; customer **password** and WP **`externalId`** writes blocked (`externalId` forced unlinked `-1`)
 
 ## Amelia Pro MCP vs this plugin

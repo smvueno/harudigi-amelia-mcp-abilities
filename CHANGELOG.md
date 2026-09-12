@@ -6,6 +6,21 @@ All notable changes to **HaruDigi Booking Abilities for Amelia and Easy MCP AI**
 
 Format: [Keep a Changelog](https://keepachangelog.com/) · versions match plugin `Version` / git tags `vX.Y.Z`.
 
+## [2.0.7] - 2026-09-12
+
+### Added
+- `amelia/book` `action=notify` (alias `resend`) sends customer status emails for an appointment without changing status/time — requires `confirm:true`
+- Help / discover docs clarify that `notify:true` is a lifecycle gate only; templates must be enabled in Amelia
+
+### Fixed
+- `action=update` no longer permanently clears `notifyParticipants` (was killing reminders); omitted notify mutes that edit then restores the prior flag
+- Multi-booking updates keep sibling bookings in the payload (patch first, or `booking_id` when set)
+- Manual notify is email-only and errors when no enabled customer template matches
+- `waiting` accepted as a booking status; confirm message for notify is non-deletion wording
+
+### Upgrade notice
+Use `amelia/book action=notify id=… confirm:true` to manually email customers for the current booking status.
+
 ## [2.0.6] - 2026-09-11
 
 ### Fixed

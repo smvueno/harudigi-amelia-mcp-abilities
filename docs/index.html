@@ -123,9 +123,10 @@
     <section>
       <h2>Safety defaults</h2>
       <ul>
-        <li><code>notify</code> defaults <strong>false</strong> — ask before emailing customers</li>
+        <li><code>notify</code> defaults <strong>false</strong> — lifecycle gate only; ask before <code>true</code></li>
+        <li>Manual send: <code>amelia/book action=notify</code> + <code>confirm:true</code> (template must be enabled in Amelia)</li>
         <li>Booking status omitted → Amelia <code>defaultAppointmentStatus</code></li>
-        <li>Deletes / cancel need <code>confirm: true</code></li>
+        <li>Deletes / cancel / notify need <code>confirm: true</code></li>
         <li>Secrets redacted; password / <code>externalId</code> writes blocked</li>
       </ul>
     </section>

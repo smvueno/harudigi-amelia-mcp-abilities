@@ -22,6 +22,7 @@ use AmeliaBooking\Application\Controller\Booking\Event\AddEventController;
 use AmeliaBooking\Application\Controller\Booking\Event\DeleteEventController;
 use AmeliaBooking\Application\Controller\Booking\Event\GetEventController;
 use AmeliaBooking\Application\Controller\Booking\Event\UpdateEventController;
+use AmeliaBooking\Domain\Entity\Entities;
 
 function meta_book( array $input = array() ) {
 	$action = strtolower( (string) ( $input['action'] ?? '' ) );
@@ -42,6 +43,9 @@ function meta_book( array $input = array() ) {
 		}
 		$id = Helpers::parse_id( $input['id'] ?? $input['appointment_id'] ?? 0, 'id' );
 		return is_wp_error( $id ) ? $id : Helpers::invoke( DeleteAppointmentController::class, array(), array( 'id' => $id ) );
+	}
+	if ( 'notify' === $action || 'resend' === $action ) {
+		return book_notify( $input );
 	}
 	if ( 'create_event' === $action ) {
 		$fields = Helpers::body_from_input( $input, array( 'action', 'id', 'confirm', 'notify' ) );
@@ -83,7 +87,7 @@ function meta_book( array $input = array() ) {
 
 	return new \WP_Error(
 		'invalid_action',
-		__( 'book action must be create|update|cancel|delete|set_status|create_event|update_event|delete_event|book_event.', 'harudigi-booking-abilities-for-amelia' )
+		__( 'book action must be create|update|cancel|delete|set_status|notify|create_event|update_event|delete_event|book_event.', 'harudigi-booking-abilities-for-amelia' )
 	);
 }
 
@@ -194,7 +198,7 @@ function book_update_appointment( array $input ) {
 		}
 	}
 
-	// Build booking-level patch on first booking if extras/CF/persons/status/duration provided.
+	// Build booking-level patch. Keep all existing bookings; merge onto target only.
 	$booking_patch = array();
 	foreach ( array( 'persons', 'status', 'duration', 'extras', 'customFields', 'couponCode' ) as $k ) {
 		if ( array_key_exists( $k, $input ) ) {
@@ -202,38 +206,73 @@ function book_update_appointment( array $input ) {
 		}
 	}
 	if ( $booking_patch ) {
-		$bookings = $existing['bookings'] ?? array();
-		$first    = ( is_array( $bookings ) && isset( $bookings[0] ) && is_array( $bookings[0] ) ) ? $bookings[0] : array();
-		$bid      = (int) ( $first['id'] ?? 0 );
-		$row      = array_merge( array( 'id' => $bid, 'customerId' => (int) ( $first['customerId'] ?? 0 ) ), $booking_patch );
-		if ( isset( $row['customFields'] ) ) {
-			$service_id = (int) ( $existing['serviceId'] ?? $input['serviceId'] ?? 0 );
-			$expanded   = expand_custom_fields_for_booking( $row['customFields'], $service_id );
-			if ( is_wp_error( $expanded ) ) {
-				return $expanded;
-			}
-			if ( empty( $input['replaceCustomFields'] ) && ! empty( $first['customFields'] ) ) {
-				$existing_cf = normalize_booking_custom_fields( $first['customFields'] );
-				if ( is_string( $existing_cf ) ) {
-					$decoded     = json_decode( $existing_cf, true );
-					$existing_cf = is_array( $decoded ) ? $decoded : array();
+		$bookings = array();
+		if ( ! empty( $existing['bookings'] ) && is_array( $existing['bookings'] ) ) {
+			foreach ( $existing['bookings'] as $b ) {
+				if ( is_array( $b ) ) {
+					$bookings[] = $b;
 				}
-				$row['customFields'] = array_replace( is_array( $existing_cf ) ? $existing_cf : array(), $expanded );
-			} else {
-				$row['customFields'] = $expanded;
 			}
 		}
-		$patch['bookings'] = array( $row );
+		if ( ! $bookings ) {
+			return new \WP_Error( 'amelia_not_found', __( 'Appointment has no bookings to update.', 'harudigi-booking-abilities-for-amelia' ) );
+		}
+		$target_bid = (int) ( $input['booking_id'] ?? 0 );
+		$service_id = (int) ( $existing['serviceId'] ?? $input['serviceId'] ?? 0 );
+		$out        = array();
+		$applied    = false;
+		foreach ( $bookings as $i => $row_existing ) {
+			$bid   = (int) ( $row_existing['id'] ?? 0 );
+			// Explicit booking_id wins; otherwise patch first booking (legacy) and keep siblings.
+			$apply = $target_bid ? ( $bid === $target_bid ) : ( 0 === $i );
+			if ( ! $apply ) {
+				$out[] = $row_existing;
+				continue;
+			}
+			$applied = true;
+			$row     = array_merge( $row_existing, $booking_patch );
+			$row['id']         = $bid;
+			$row['customerId'] = (int) ( $row['customerId'] ?? $row_existing['customerId'] ?? 0 );
+			if ( isset( $row['customFields'] ) ) {
+				$expanded = expand_custom_fields_for_booking( $row['customFields'], $service_id );
+				if ( is_wp_error( $expanded ) ) {
+					return $expanded;
+				}
+				if ( empty( $input['replaceCustomFields'] ) && ! empty( $row_existing['customFields'] ) ) {
+					$existing_cf = normalize_booking_custom_fields( $row_existing['customFields'] );
+					if ( is_string( $existing_cf ) ) {
+						$decoded     = json_decode( $existing_cf, true );
+						$existing_cf = is_array( $decoded ) ? $decoded : array();
+					}
+					$row['customFields'] = array_replace( is_array( $existing_cf ) ? $existing_cf : array(), $expanded );
+				} else {
+					$row['customFields'] = $expanded;
+				}
+			}
+			$out[] = $row;
+		}
+		if ( $target_bid && ! $applied ) {
+			return new \WP_Error( 'no_bookings', __( 'No matching booking_id on this appointment.', 'harudigi-booking-abilities-for-amelia' ) );
+		}
+		$patch['bookings'] = $out;
 	}
 
-	if ( array_key_exists( 'notify', $input ) || array_key_exists( 'notifyParticipants', $input ) ) {
+	// Mute customer emails for this edit unless notify explicitly set.
+	// Restore prior DB flag afterward so reminders stay intact when omitted.
+	$prior_notify = (int) ! empty( $existing['notifyParticipants'] );
+	$explicit_notify = array_key_exists( 'notify', $input ) || array_key_exists( 'notifyParticipants', $input );
+	if ( $explicit_notify ) {
 		$patch['notifyParticipants'] = notify_from_input( $input );
 	} else {
 		$patch['notifyParticipants'] = 0;
 	}
 
-	$body = build_appointment_update_fields( $existing, $patch );
-	return Helpers::invoke( UpdateAppointmentController::class, $body, array( 'id' => $id ) );
+	$body   = build_appointment_update_fields( $existing, $patch );
+	$result = Helpers::invoke( UpdateAppointmentController::class, $body, array( 'id' => $id ) );
+	if ( ! $explicit_notify && $prior_notify && ! is_wp_error( $result ) ) {
+		restore_appointment_notify_participants( $id, 1 );
+	}
+	return $result;
 }
 
 /**
@@ -282,6 +321,169 @@ function book_set_status( array $input, $force_status = null ) {
 		),
 		array( 'id' => $id )
 	);
+}
+
+/**
+ * Manually send customer status emails for an appointment (no status/time change).
+ * Requires confirm:true. Email channel only. Template must be enabled in Amelia.
+ *
+ * @param array<string,mixed> $input
+ * @return array<string,mixed>|\WP_Error
+ */
+function book_notify( array $input ) {
+	$ok = Helpers::require_confirm(
+		$input,
+		__( 'Set confirm=true only after the user approved sending customer emails now.', 'harudigi-booking-abilities-for-amelia' )
+	);
+	if ( is_wp_error( $ok ) ) {
+		return $ok;
+	}
+
+	$id = Helpers::parse_id( $input['id'] ?? $input['appointment_id'] ?? 0, 'id' );
+	if ( is_wp_error( $id ) ) {
+		return $id;
+	}
+
+	$got = Helpers::invoke( GetAppointmentController::class, array(), array( 'id' => $id ), 'GET' );
+	if ( is_wp_error( $got ) ) {
+		return $got;
+	}
+
+	$data = isset( $got['data'] ) && is_array( $got['data'] ) ? $got['data'] : $got;
+	$appointment_array = $data['appointment'] ?? $data;
+	if ( ! is_array( $appointment_array ) || empty( $appointment_array['bookings'] ) || ! is_array( $appointment_array['bookings'] ) ) {
+		return new \WP_Error( 'amelia_not_found', __( 'Appointment not found.', 'harudigi-booking-abilities-for-amelia' ) );
+	}
+
+	$booking_filter = ! empty( $input['booking_id'] ) ? (int) $input['booking_id'] : 0;
+	$marked         = array();
+	$targets        = array();
+
+	foreach ( $appointment_array['bookings'] as $booking ) {
+		if ( ! is_array( $booking ) ) {
+			continue;
+		}
+		$bid = (int) ( $booking['id'] ?? 0 );
+		if ( $booking_filter && $bid !== $booking_filter ) {
+			continue;
+		}
+		$targets[] = $booking;
+		$marked[]  = $bid;
+	}
+
+	if ( ! $marked ) {
+		return new \WP_Error(
+			'no_bookings',
+			__( 'No matching bookings to notify.', 'harudigi-booking-abilities-for-amelia' )
+		);
+	}
+
+	$appointment_array['type']               = $appointment_array['type'] ?? Entities::APPOINTMENT;
+	$appointment_array['notifyParticipants'] = true;
+	$appointment_array['isBackend']          = true;
+
+	$container = Helpers::container();
+	if ( is_wp_error( $container ) ) {
+		return $container;
+	}
+
+	$attempted = array();
+	$skipped   = array();
+
+	try {
+		/** @var \AmeliaBooking\Application\Services\Notification\EmailNotificationService $email */
+		$email = $container->get( 'application.emailNotification.service' );
+
+		foreach ( $targets as $booking ) {
+			$bid    = (int) ( $booking['id'] ?? 0 );
+			$status = sanitize_key( (string) ( $booking['status'] ?? $appointment_array['status'] ?? '' ) );
+			$name   = 'customer_' . $appointment_array['type'] . '_' . $status;
+			if ( ! customer_email_template_enabled( $email, $name, $appointment_array ) ) {
+				$skipped[] = array(
+					'bookingId' => $bid,
+					'status'    => $status,
+					'reason'    => 'no_enabled_template',
+					'template'  => $name,
+				);
+				continue;
+			}
+			$email->sendCustomerBookingNotification( $appointment_array, $booking );
+			$attempted[] = array(
+				'bookingId' => $bid,
+				'status'    => $status,
+				'template'  => $name,
+				'channel'   => 'email',
+			);
+		}
+	} catch ( \Throwable $e ) {
+		return new \WP_Error(
+			'notify_failed',
+			sprintf(
+				/* translators: %s: error message */
+				__( 'Failed to send notifications: %s', 'harudigi-booking-abilities-for-amelia' ),
+				$e->getMessage()
+			)
+		);
+	}
+
+	if ( ! $attempted && $skipped ) {
+		return new \WP_Error(
+			'no_enabled_template',
+			__( 'No enabled customer email template for this booking status. Enable it in Amelia → Notifications.', 'harudigi-booking-abilities-for-amelia' ),
+			array( 'skipped' => $skipped )
+		);
+	}
+
+	return array(
+		'ok'            => true,
+		'appointmentId' => $id,
+		'bookingIds'    => $marked,
+		'status'        => $appointment_array['status'] ?? null,
+		'channels'      => array( 'email' ),
+		'attempted'     => $attempted,
+		'skipped'       => $skipped,
+		'hint'          => __( 'Queued customer status emails (email only). Delivery still depends on wp_mail / SMTP.', 'harudigi-booking-abilities-for-amelia' ),
+	);
+}
+
+/**
+ * Persist notifyParticipants without firing Amelia edit events (reminder flag restore).
+ */
+function restore_appointment_notify_participants( int $appointment_id, int $value ): void {
+	global $wpdb;
+	$wpdb->update(
+		$wpdb->prefix . 'amelia_appointments',
+		array( 'notifyParticipants' => $value ? 1 : 0 ),
+		array( 'id' => $appointment_id ),
+		array( '%d' ),
+		array( '%d' )
+	);
+}
+
+/**
+ * @param \AmeliaBooking\Application\Services\Notification\EmailNotificationService $email
+ * @param array<string,mixed>                                                       $appointment_array
+ */
+function customer_email_template_enabled( $email, string $name, array $appointment_array ): bool {
+	try {
+		$notifications = $email->getByNameAndType( $name, 'email' );
+	} catch ( \Throwable $e ) {
+		return false;
+	}
+	if ( ! $notifications || ! method_exists( $notifications, 'getItems' ) ) {
+		return false;
+	}
+	$send_default = $email->sendDefault( $notifications, $appointment_array );
+	foreach ( $notifications->getItems() as $notification ) {
+		$status = $notification->getStatus() ? $notification->getStatus()->getValue() : '';
+		if ( 'enabled' !== $status ) {
+			continue;
+		}
+		if ( $email->checkCustom( $notification, $appointment_array, $send_default ) ) {
+			return true;
+		}
+	}
+	return false;
 }
 
 /** @param array<string,mixed> $input @return array<string,mixed>|\WP_Error */

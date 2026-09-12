@@ -78,12 +78,16 @@ t( 'enable-list has exactly 7 amelia meta', count( $amelia ) === 7 && count( arr
 
 $h = meta_help();
 t( 'help', ok_arr( $h ) && isset( $h['tools']['amelia/book'] ) );
+t( 'help documents manual notify', ok_arr( $h ) && ! empty( $h['safety']['manual_send'] ) );
 
 $st = meta_status();
 t( 'status', ok_arr( $st ) && isset( $st['defaultAppointmentStatus'] ) );
 
 $d = meta_discover( array( 'entity' => 'extra' ) );
 t( 'discover extra', ok_arr( $d ) && in_array( 'create', $d['actions'], true ) );
+
+$d_appt = meta_discover( array( 'entity' => 'appointment' ) );
+t( 'discover appointment notify', ok_arr( $d_appt ) && in_array( 'notify', $d_appt['book_actions'] ?? array(), true ) );
 
 $svc = meta_query( array( 'action' => 'list', 'entity' => 'service', 'limit' => 5 ) );
 t( 'query list services', ok_arr( $svc ) );
@@ -258,6 +262,47 @@ if ( $service_id && $provider_id && $customer_id ) {
 			)
 		);
 		t( 'book update extras/CF', ok_arr( $upd ), is_wp_error( $upd ) ? $upd->get_error_message() : '' );
+
+		$no_notify = meta_book( array( 'action' => 'notify', 'id' => $booking_id_appt ) );
+		t( 'book notify without confirm refused', is_wp_error( $no_notify ) && 'confirm_required' === $no_notify->get_error_code() );
+
+		$do_notify = meta_book( array( 'action' => 'notify', 'id' => $booking_id_appt, 'confirm' => true ) );
+		t( 'book notify with confirm', ok_arr( $do_notify ) && ! empty( $do_notify['ok'] ), is_wp_error( $do_notify ) ? $do_notify->get_error_message() : '' );
+		t( 'book notify email channel only', ok_arr( $do_notify ) && array( 'email' ) === ( $do_notify['channels'] ?? null ) );
+
+		$resend = meta_book( array( 'action' => 'resend', 'id' => $booking_id_appt, 'confirm' => true ) );
+		t( 'book resend alias', ok_arr( $resend ) && ! empty( $resend['ok'] ), is_wp_error( $resend ) ? $resend->get_error_message() : '' );
+
+		$bad_bid = meta_book( array( 'action' => 'notify', 'id' => $booking_id_appt, 'booking_id' => 999999999, 'confirm' => true ) );
+		t( 'book notify bad booking_id refused', is_wp_error( $bad_bid ) && 'no_bookings' === $bad_bid->get_error_code() );
+
+		// Persist notify=1, then note-only update must restore flag (not leave 0).
+		$with_notify = meta_book(
+			array(
+				'action' => 'update',
+				'id'     => $booking_id_appt,
+				'notify' => true,
+			)
+		);
+		t( 'book update set notify true', ok_arr( $with_notify ), is_wp_error( $with_notify ) ? $with_notify->get_error_message() : '' );
+		global $wpdb;
+		$flag_before = (int) $wpdb->get_var(
+			$wpdb->prepare( 'SELECT notifyParticipants FROM ' . $wpdb->prefix . 'amelia_appointments WHERE id=%d', $booking_id_appt )
+		);
+		t( 'notifyParticipants stored 1', 1 === $flag_before );
+
+		$note_upd = meta_book(
+			array(
+				'action'        => 'update',
+				'id'            => $booking_id_appt,
+				'internalNotes' => 'MCP harness note after notify flag',
+			)
+		);
+		t( 'book update notes omit notify', ok_arr( $note_upd ), is_wp_error( $note_upd ) ? $note_upd->get_error_message() : '' );
+		$flag_after = (int) $wpdb->get_var(
+			$wpdb->prepare( 'SELECT notifyParticipants FROM ' . $wpdb->prefix . 'amelia_appointments WHERE id=%d', $booking_id_appt )
+		);
+		t( 'notifyParticipants restored after mute update', 1 === $flag_after, "flag=$flag_after" );
 
 		$no_confirm = meta_book( array( 'action' => 'cancel', 'id' => $booking_id_appt ) );
 		t( 'book cancel without confirm refused', is_wp_error( $no_confirm ) && 'confirm_required' === $no_confirm->get_error_code() );

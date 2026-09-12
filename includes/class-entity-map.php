@@ -212,6 +212,7 @@ final class Entity_Map {
 				'list'     => array( GetNotificationsController::class, 'GET' ),
 				'get'      => null,
 				'mutate'   => false,
+				'note'     => 'List only. Toggle enable/disable in Amelia admin. Manual send: amelia/book action=notify id=… confirm:true',
 			),
 		);
 	}

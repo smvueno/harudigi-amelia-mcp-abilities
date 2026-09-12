@@ -250,14 +250,16 @@ final class Helpers {
 	 * @param array<string, mixed> $input Ability input.
 	 * @return true|\WP_Error
 	 */
-	public static function require_confirm( array $input ) {
+	public static function require_confirm( array $input, string $message = '' ) {
 		$confirm = $input['confirm'] ?? false;
 		if ( true === $confirm || 1 === $confirm || '1' === $confirm || 'true' === $confirm ) {
 			return true;
 		}
 		return new \WP_Error(
 			'confirm_required',
-			__( 'Destructive action refused. Set confirm=true only after the user explicitly approved permanent deletion. Prefer cancel/hide/disable when possible.', 'harudigi-booking-abilities-for-amelia' )
+			$message !== ''
+				? $message
+				: __( 'Destructive action refused. Set confirm=true only after the user explicitly approved permanent deletion. Prefer cancel/hide/disable when possible.', 'harudigi-booking-abilities-for-amelia' )
 		);
 	}
 
@@ -293,7 +295,7 @@ final class Helpers {
 	 * @return true|\WP_Error
 	 */
 	public static function assert_booking_status( string $status ) {
-		$allowed = array( 'approved', 'pending', 'canceled', 'rejected', 'no-show' );
+		$allowed = array( 'approved', 'pending', 'canceled', 'rejected', 'no-show', 'waiting' );
 		if ( ! in_array( $status, $allowed, true ) ) {
 			return new \WP_Error(
 				'invalid_status',
@@ -505,6 +507,7 @@ final class Helpers {
 			'safety'         => array(
 				'deletes_require_confirm' => true,
 				'notify_default'          => false,
+				'notify_action_confirm'   => true,
 				'list_max_limit'          => self::LIST_MAX_LIMIT,
 				'blocked_write_keys'      => self::BLOCKED_WRITE_KEYS,
 			),
