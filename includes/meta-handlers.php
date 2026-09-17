@@ -88,7 +88,7 @@ function register_meta_abilities(): void {
 		array(
 			'label'        => __( 'Query Amelia', 'harudigi-booking-abilities-for-amelia' ),
 			'description'  => __(
-				'Read data. Required: action + entity (for list/get). Actions: list, get, stats, availability, booking_options, settings. Examples: {action:"list",entity:"service"}, {action:"get",entity:"appointment",id:12}, {action:"availability",serviceId:1,startDateTime:"2026-09-20 09:00"}, {action:"booking_options",serviceId:1} → extras + custom fields for booking.',
+				'Read data. Required: action + entity (for list/get). Actions: list, get, stats, availability, booking_options, settings. Appointment list defaults: date window today→+14d, view=slim (compact rows with aptId+bookId). Override with date_from/date_to or dates; view=full for raw Amelia blobs; page/limit to page inside the window. Examples: {action:"list",entity:"appointment"}, {action:"list",entity:"appointment",date_from:"2026-09-17",date_to:"2026-09-17"}, {action:"get",entity:"appointment",id:12}.',
 				'harudigi-booking-abilities-for-amelia'
 			),
 			'callback'     => __NAMESPACE__ . '\\meta_query',
@@ -108,8 +108,9 @@ function register_meta_abilities(): void {
 					'limit'         => array( 'type' => 'integer' ),
 					'search'        => array( 'type' => 'string' ),
 					'status'        => array( 'type' => 'string' ),
-					'date_from'     => array( 'type' => 'string' ),
-					'date_to'       => array( 'type' => 'string' ),
+					'date_from'     => array( 'type' => 'string', 'description' => 'YYYY-MM-DD (with date_to → dates window).' ),
+					'date_to'       => array( 'type' => 'string', 'description' => 'YYYY-MM-DD.' ),
+					'view'          => array( 'type' => 'string', 'description' => 'appointment list: slim (default) | full.' ),
 					'serviceId'     => array( 'type' => 'integer' ),
 					'providerIds'   => array( 'type' => 'array', 'items' => array( 'type' => 'integer' ) ),
 					'startDateTime' => array( 'type' => 'string' ),
@@ -155,7 +156,7 @@ function register_meta_abilities(): void {
 		array(
 			'label'        => __( 'Book / Manage Appointments', 'harudigi-booking-abilities-for-amelia' ),
 			'description'  => __(
-				'Create/update/cancel appointments and events. SAFETY: notify defaults FALSE — ask the human before notify:true (emails customers). notify/resend action sends customer status emails now (needs confirm:true; Amelia template must be enabled). status: omit to use Amelia Settings → defaultAppointmentStatus; never assume approved. Extras: [{extraId,quantity}]. Custom fields: simple map {"3":"Gion","4":"WhatsApp"} (field id → value) or full Amelia objects. Create needs: serviceId, providerId, customerId, bookingStart (YYYY-MM-DD HH:mm). Call amelia/query action=booking_options first. Cancel/delete/notify need confirm:true. Actions: create, update, cancel, delete, set_status, notify, create_event, update_event, delete_event, book_event.',
+				'Create/update/cancel appointments and events. id = appointmentId ONLY (never bookingId; pay uses bookingId). WRITE PROTOCOL: (1) dry_run:true → preview + previewId, no DB write (2) show preview to human (3) confirm:true + same fields + previewId. Updates also need expectedCustomer (name or email). Never mix internalNotes + bookingStart in one update. Cancel/delete/notify need confirm:true. notify defaults FALSE. Create needs: serviceId, providerId, customerId, bookingStart. Actions: create, update, cancel, delete, set_status, notify, create_event, update_event, delete_event, book_event.',
 				'harudigi-booking-abilities-for-amelia'
 			),
 			'callback'     => __NAMESPACE__ . '\\meta_book',
@@ -168,7 +169,7 @@ function register_meta_abilities(): void {
 				'required'             => array( 'action' ),
 				'properties'           => array(
 					'action'             => array( 'type' => 'string', 'description' => 'create|update|cancel|delete|set_status|notify|resend|create_event|update_event|delete_event|book_event' ),
-					'id'                 => array( 'type' => 'integer', 'description' => 'Appointment/event id for update/cancel/delete/notify.' ),
+					'id'                 => array( 'type' => 'integer', 'description' => 'AppointmentId for update/cancel/delete/notify — NOT bookingId.' ),
 					'serviceId'          => array( 'type' => 'integer' ),
 					'providerId'         => array( 'type' => 'integer' ),
 					'customerId'         => array( 'type' => 'integer' ),
@@ -193,7 +194,10 @@ function register_meta_abilities(): void {
 					'couponCode'         => array( 'type' => 'string' ),
 					'fields'             => array( 'type' => 'object', 'description' => 'Partial update body for update action.' ),
 					'replaceCustomFields'=> array( 'type' => 'boolean' ),
-					'confirm'            => array( 'type' => 'boolean', 'description' => 'Required true for cancel|delete|notify.' ),
+					'dry_run'            => array( 'type' => 'boolean', 'description' => 'create/update: preview only, returns previewId. No DB write.' ),
+					'previewId'          => array( 'type' => 'string', 'description' => 'From dry_run; required with confirm on create/update.' ),
+					'expectedCustomer'   => array( 'type' => 'string', 'description' => 'Required on update: customer name or email must match appointment.' ),
+					'confirm'            => array( 'type' => 'boolean', 'description' => 'create/update after dry_run; also cancel|delete|notify.' ),
 					'eventId'            => array( 'type' => 'integer' ),
 					'payment'            => array( 'type' => 'object' ),
 				),
@@ -247,10 +251,11 @@ function meta_help( array $input = array() ) {
 			'amelia/pay'      => 'Payments + links.',
 		),
 		'workflow_book' => array(
-			'1' => 'amelia/query action=booking_options serviceId=N — get extras + custom field ids.',
-			'2' => 'amelia/query action=availability serviceId=N startDateTime=...',
-			'3' => 'amelia/book action=create serviceId providerId customerId bookingStart extras customFields — omit status (uses site default); leave notify false unless human said yes.',
-			'4' => 'Manual resend: amelia/book action=notify id=APPOINTMENT_ID confirm:true — sends customer status email now (Amelia template must be enabled).',
+			'1' => 'amelia/query action=list entity=appointment — slim rows today→+14d (aptId + bookId). Narrow with date_from/date_to.',
+			'2' => 'Writes: dry_run:true first → show previewId/changes to human → confirm:true + previewId (+ expectedCustomer on update).',
+			'3' => 'id on book = appointmentId only. bookingId is for amelia/pay. Never mix internalNotes + bookingStart.',
+			'4' => 'Create: booking_options → dry_run create → confirm create. Omit status (site default); notify false unless human said yes.',
+			'5' => 'Manual resend: amelia/book action=notify id=APPOINTMENT_ID confirm:true.',
 		),
 		'workflow_pay'  => array(
 			'full_link'   => 'amelia/pay action=link id=PAYMENT_ID gateway=stripe — returns buy.stripe.com URL for full remaining. Send that URL to the client (not an Amelia site link).',
@@ -261,17 +266,29 @@ function meta_help( array $input = array() ) {
 			'send'        => 'Always send paymentLink from the response (Stripe Checkout). Never invent amounts.',
 		),
 		'safety'      => array(
-			'notify_default'          => false,
-			'ask_before_notify_true'  => true,
-			'notify_flag_is_gate'     => 'notify:true on create/set_status only allows mail on that lifecycle event; does not send by itself.',
-			'manual_send'             => 'action=notify|resend + confirm:true (email only)',
-			'templates_gate'          => 'Customer emails require enabled templates in Amelia → Notifications (query entity=notification to list).',
-			'provider_mail'           => 'Provider status emails ignore booking notifyParticipants when those templates are enabled.',
-			'update_notify'           => 'Omit notify on update → mute this edit’s customer emails but restore prior notifyParticipants (reminders stay). Pass notify:true|false to set the stored flag.',
-			'status_when_omitted'     => 'Amelia Settings → general.defaultAppointmentStatus',
-			'deletes_need_confirm'    => true,
-			'notify_needs_confirm'    => true,
-			'test_with_fake_customer' => true,
+			'notify_default'             => false,
+			'ask_before_notify_true'     => true,
+			'notify_flag_is_gate'        => 'notify:true on create/set_status only allows mail on that lifecycle event; does not send by itself.',
+			'manual_send'                => 'action=notify|resend + confirm:true (email only)',
+			'templates_gate'             => 'Customer emails require enabled templates in Amelia → Notifications (query entity=notification to list).',
+			'provider_mail'              => 'Provider status emails ignore booking notifyParticipants when those templates are enabled.',
+			'update_notify'              => 'Omit notify on update → mute this edit’s customer emails but restore prior notifyParticipants (reminders stay). Pass notify:true|false to set the stored flag.',
+			'status_when_omitted'        => 'Amelia Settings → general.defaultAppointmentStatus',
+			'deletes_need_confirm'       => true,
+			'notify_needs_confirm'       => true,
+			'create_update_dry_run'      => true,
+			'previewId_binds_confirm'    => true,
+			'expectedCustomer_on_update' => true,
+			'notes_xor_reschedule'       => true,
+			'id_is_appointmentId'        => true,
+			'test_with_fake_customer'    => true,
+			'appointment_list_default'   => 'slim + today→+14d',
+		),
+		'ids'         => array(
+			'appointmentId' => 'Calendar slot — amelia/book id',
+			'bookingId'     => 'Customer seat — amelia/pay customerBookingId',
+			'customerId'    => 'Profile — amelia/mutate',
+			'paymentId'     => 'Payment row — amelia/pay id',
 		),
 		'shapes'      => array(
 			'extras'       => array( array( 'extraId' => 1, 'quantity' => 1 ) ),
@@ -344,6 +361,18 @@ function meta_discover( array $input = array() ) {
 	);
 	if ( 'appointment' === $def['key'] ) {
 		$out['book_actions'] = array( 'create', 'update', 'cancel', 'delete', 'set_status', 'notify' );
+		$out['write_protocol'] = array(
+			'dry_run'          => true,
+			'previewId'        => true,
+			'confirm'          => true,
+			'expectedCustomer' => 'required on update',
+			'id'               => 'appointmentId only',
+		);
+		$out['list_defaults'] = array(
+			'view'      => 'slim',
+			'date_from' => 'today',
+			'date_to'   => '+14 days',
+		);
 		$out['notify']       = array(
 			'action'  => 'notify',
 			'needs'   => array( 'id', 'confirm:true' ),
@@ -434,6 +463,52 @@ function meta_query( array $input = array() ) {
 			$fields     = list_custom_fields_for_entity( $service_id, $for_events );
 			return is_wp_error( $fields ) ? $fields : array( 'success' => true, 'data' => array( 'customFields' => $fields ) );
 		}
+
+		// Appointments: default date window + slim rows for agent context diet.
+		if ( 'appointment' === $def['key'] ) {
+			$view = strtolower( (string) ( $input['view'] ?? 'slim' ) );
+			if ( '' === $view ) {
+				$view = 'slim';
+			}
+			$had_dates = ! empty( $params['dates'] );
+			if ( ! $had_dates ) {
+				$from = wp_date( 'Y-m-d' );
+				$to   = wp_date( 'Y-m-d', strtotime( '+14 days' ) );
+				$params['dates'] = array( $from, $to );
+			}
+			$window = is_array( $params['dates'] ) && 2 === count( $params['dates'] )
+				? array( (string) $params['dates'][0], (string) $params['dates'][1] )
+				: array( wp_date( 'Y-m-d' ), wp_date( 'Y-m-d', strtotime( '+14 days' ) ) );
+			$page  = (int) ( $params['page'] ?? 1 );
+			$limit = (int) ( $params['limit'] ?? 25 );
+			if ( 'slim' === $view && ! isset( $input['limit'] ) && ! isset( $input['per_page'] ) ) {
+				$params['limit'] = min( 50, Helpers::LIST_MAX_LIMIT );
+				$limit           = (int) $params['limit'];
+			}
+			$result = Helpers::invoke( $def['list'][0], $params, array(), $def['list'][1] );
+			if ( is_wp_error( $result ) ) {
+				return $result;
+			}
+			if ( 'full' === $view ) {
+				if ( is_array( $result ) ) {
+					$result['meta'] = array(
+						'window'  => $window,
+						'page'    => $page,
+						'limit'   => $limit,
+						'view'    => 'full',
+						'defaultWindowApplied' => ! $had_dates,
+					);
+				}
+				return $result;
+			}
+			if ( ! is_array( $result ) ) {
+				return $result;
+			}
+			$slim = book_slim_appointments_result( $result, $window, $page, $limit );
+			$slim['meta']['defaultWindowApplied'] = ! $had_dates;
+			return $slim;
+		}
+
 		return Helpers::invoke( $def['list'][0], $params, array(), $def['list'][1] );
 	}
 

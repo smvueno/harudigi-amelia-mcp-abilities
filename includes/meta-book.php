@@ -93,6 +93,11 @@ function meta_book( array $input = array() ) {
 
 /** @param array<string,mixed> $input @return array<string,mixed>|\WP_Error */
 function book_create_appointment( array $input ) {
+	$mode = book_require_write_mode( $input );
+	if ( is_wp_error( $mode ) ) {
+		return $mode;
+	}
+
 	$service_id  = (int) ( $input['serviceId'] ?? 0 );
 	$provider_id = (int) ( $input['providerId'] ?? 0 );
 	$customer_id = (int) ( $input['customerId'] ?? 0 );
@@ -102,6 +107,36 @@ function book_create_appointment( array $input ) {
 			'invalid_fields',
 			__( 'serviceId, providerId, customerId, and bookingStart are required.', 'harudigi-booking-abilities-for-amelia' )
 		);
+	}
+
+	$fp_payload = book_create_fingerprint_payload( $input );
+	if ( 'dry_run' === $mode ) {
+		$preview = array(
+			'success' => true,
+			'target'  => array(
+				'serviceId'    => $service_id,
+				'providerId'   => $provider_id,
+				'customerId'   => $customer_id,
+				'bookingStart' => $start,
+				'persons'      => max( 1, (int) ( $input['persons'] ?? 1 ) ),
+				'internalNotes'=> (string) ( $input['internalNotes'] ?? '' ),
+			),
+			'changes'   => array(
+				array(
+					'field'  => 'create',
+					'before' => null,
+					'after'  => $fp_payload,
+				),
+			),
+			'unchanged' => array(),
+			'warnings'  => array( 'create' ),
+		);
+		return book_store_preview( 'create', $fp_payload, $preview );
+	}
+
+	$ok = book_consume_preview( (string) ( $input['previewId'] ?? '' ), 'create', $fp_payload );
+	if ( is_wp_error( $ok ) ) {
+		return $ok;
 	}
 
 	if ( array_key_exists( 'status', $input ) && '' !== (string) $input['status'] ) {
@@ -173,6 +208,11 @@ function book_create_appointment( array $input ) {
 
 /** @param array<string,mixed> $input @return array<string,mixed>|\WP_Error */
 function book_update_appointment( array $input ) {
+	$mode = book_require_write_mode( $input );
+	if ( is_wp_error( $mode ) ) {
+		return $mode;
+	}
+
 	$id = Helpers::parse_id( $input['id'] ?? $input['appointment_id'] ?? 0, 'id' );
 	if ( is_wp_error( $id ) ) {
 		return $id;
@@ -180,14 +220,43 @@ function book_update_appointment( array $input ) {
 
 	$existing_res = Helpers::invoke( GetAppointmentController::class, array(), array( 'id' => $id ), 'GET' );
 	if ( is_wp_error( $existing_res ) ) {
-		return $existing_res;
+		$msg = $existing_res->get_error_message();
+		return new \WP_Error(
+			$existing_res->get_error_code(),
+			$msg . ' ' . __( 'Hint: amelia/book id must be appointmentId (not bookingId). Use list/get slim rows for aptId vs bookId.', 'harudigi-booking-abilities-for-amelia' )
+		);
 	}
 	$data     = isset( $existing_res['data'] ) && is_array( $existing_res['data'] ) ? $existing_res['data'] : $existing_res;
 	$existing = $data['appointment'] ?? $data;
 	if ( ! is_array( $existing ) ) {
-		return new \WP_Error( 'amelia_not_found', __( 'Appointment not found.', 'harudigi-booking-abilities-for-amelia' ) );
+		return new \WP_Error( 'amelia_not_found', __( 'Appointment not found. id must be appointmentId, not bookingId.', 'harudigi-booking-abilities-for-amelia' ) );
 	}
 
+	$patch = book_collect_update_patch_keys( $input );
+	$concern = book_assert_single_concern( $patch );
+	if ( is_wp_error( $concern ) ) {
+		return $concern;
+	}
+
+	list( , $customer ) = book_first_booking_customer( $existing );
+	$expected = (string) ( $input['expectedCustomer'] ?? '' );
+	$match    = book_assert_expected_customer( $customer, $expected );
+	if ( is_wp_error( $match ) ) {
+		return $match;
+	}
+
+	$fp_payload = book_update_fingerprint_payload( $id, $input, $patch );
+	if ( 'dry_run' === $mode ) {
+		$preview = book_build_update_preview( $existing, $patch, $expected );
+		return book_store_preview( 'update', $fp_payload, $preview );
+	}
+
+	$ok = book_consume_preview( (string) ( $input['previewId'] ?? '' ), 'update', $fp_payload );
+	if ( is_wp_error( $ok ) ) {
+		return $ok;
+	}
+
+	// Re-merge patch including fields for the actual write (same as before).
 	$patch = array();
 	if ( isset( $input['fields'] ) && is_array( $input['fields'] ) ) {
 		$patch = $input['fields'];

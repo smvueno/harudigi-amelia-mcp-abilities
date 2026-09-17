@@ -15,6 +15,7 @@ wp_set_current_user( 1 );
 require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/class-entity-map.php';
 require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/booking-payload.php';
 require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/payment-payload.php';
+require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/book-safety.php';
 require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/meta-handlers.php';
 require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/meta-mutate.php';
 require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/meta-book.php';
@@ -27,6 +28,14 @@ use function Harudigi_Amelia_MCP_Abilities\{
 	meta_book,
 	meta_pay
 };
+
+function book_commit( array $args ) {
+	$dry = meta_book( array_merge( $args, array( 'dry_run' => true ) ) );
+	if ( is_wp_error( $dry ) ) {
+		return $dry;
+	}
+	return meta_book( array_merge( $args, array( 'confirm' => true, 'previewId' => $dry['previewId'] ?? '' ) ) );
+}
 
 $pass = 0;
 $fail = 0;
@@ -101,7 +110,7 @@ $start = wp_date( 'Y-m-d H:i', strtotime( '+50 days +' . wp_rand( 1, 200 ) . ' m
 // Snap to :00 or :30 for Amelia slots.
 $ts    = strtotime( $start );
 $start = wp_date( 'Y-m-d H:i', $ts - ( $ts % 1800 ) );
-$book  = meta_book(
+$book  = book_commit(
 	array(
 		'action'       => 'create',
 		'serviceId'    => $service_id,
@@ -216,7 +225,7 @@ t( 'cash remainder paid', ok_arr( $cash ) && $cash_row && ( $cash_row['status'] 
 $start2 = wp_date( 'Y-m-d H:i', strtotime( '+55 days +' . wp_rand( 1, 200 ) . ' minutes' ) );
 $ts2    = strtotime( $start2 );
 $start2 = wp_date( 'Y-m-d H:i', $ts2 - ( $ts2 % 1800 ) );
-$book2  = meta_book(
+$book2  = book_commit(
 	array(
 		'action'       => 'create',
 		'serviceId'    => $service_id,

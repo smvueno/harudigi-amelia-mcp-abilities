@@ -19,6 +19,7 @@ if ( ! current_user_can( 'manage_options' ) ) {
 require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/class-entity-map.php';
 require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/booking-payload.php';
 require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/payment-payload.php';
+require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/book-safety.php';
 require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/meta-handlers.php';
 require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/meta-mutate.php';
 require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/meta-book.php';
@@ -64,6 +65,26 @@ function t( string $name, $ok, string $detail = '' ): void {
 
 function ok_arr( $r ): bool {
 	return is_array( $r ) && ! is_wp_error( $r );
+}
+
+/** dry_run then confirm for create/update. */
+function book_commit( array $args ) {
+	$dry = meta_book( array_merge( $args, array( 'dry_run' => true ) ) );
+	if ( is_wp_error( $dry ) ) {
+		return $dry;
+	}
+	if ( empty( $dry['previewId'] ) ) {
+		return new \WP_Error( 'no_preview', 'dry_run missing previewId' );
+	}
+	return meta_book(
+		array_merge(
+			$args,
+			array(
+				'confirm'   => true,
+				'previewId' => $dry['previewId'],
+			)
+		)
+	);
 }
 
 echo "=== Amelia meta MCP tests ===\n";
@@ -215,6 +236,14 @@ if ( ok_arr( $opts ) && ! empty( $opts['custom_fields'] ) && is_array( $opts['cu
 
 $default_status = get_default_appointment_status( $service_id );
 $booking_id_appt = 0;
+$customer_label  = 'MCP Test';
+
+// Slim list defaults.
+$slim = meta_query( array( 'action' => 'list', 'entity' => 'appointment' ) );
+t( 'appointment list slim default', ok_arr( $slim ) && ( $slim['view'] ?? '' ) === 'slim', is_wp_error( $slim ) ? $slim->get_error_message() : '' );
+t( 'appointment list has meta.window', ok_arr( $slim ) && ! empty( $slim['meta']['window'][0] ) && ! empty( $slim['meta']['window'][1] ) );
+t( 'appointment list defaultWindowApplied', ok_arr( $slim ) && ! empty( $slim['meta']['defaultWindowApplied'] ) );
+t( 'help documents dry_run', ok_arr( $h ) && ! empty( $h['safety']['create_update_dry_run'] ) );
 
 if ( $service_id && $provider_id && $customer_id ) {
 	// Find a far-future weekday morning slot to avoid collisions.
@@ -235,8 +264,16 @@ if ( $service_id && $provider_id && $customer_id ) {
 	if ( $cf_map ) {
 		$book['customFields'] = $cf_map;
 	}
-	$created = meta_book( $book );
-	t( 'book create', ok_arr( $created ), is_wp_error( $created ) ? $created->get_error_message() : '' );
+
+	$bare = meta_book( $book );
+	t( 'book create without dry_run refused', is_wp_error( $bare ) && 'dry_run_required' === $bare->get_error_code() );
+
+	$dry_c = meta_book( array_merge( $book, array( 'dry_run' => true ) ) );
+	t( 'book create dry_run', ok_arr( $dry_c ) && ! empty( $dry_c['previewId'] ), is_wp_error( $dry_c ) ? $dry_c->get_error_message() : '' );
+	t( 'book create dry_run no appointment id yet', ok_arr( $dry_c ) && empty( $dry_c['data']['appointment']['id'] ?? null ) );
+
+	$created = book_commit( $book );
+	t( 'book create confirm', ok_arr( $created ), is_wp_error( $created ) ? $created->get_error_message() : '' );
 
 	$applied = is_array( $created ) ? ( $created['applied_status'] ?? null ) : null;
 	t( 'book status matches site default', $applied === $default_status, "applied=$applied default=$default_status" );
@@ -246,21 +283,62 @@ if ( $service_id && $provider_id && $customer_id ) {
 		$data = $created['data'] ?? $created;
 		$appt = $data['appointment'] ?? $data;
 		$booking_id_appt = (int) ( is_array( $appt ) ? ( $appt['id'] ?? 0 ) : 0 );
+		if ( is_array( $appt ) && ! empty( $appt['bookings'][0]['customer'] ) ) {
+			$c = $appt['bookings'][0]['customer'];
+			$customer_label = trim( ( $c['firstName'] ?? '' ) . ' ' . ( $c['lastName'] ?? '' ) );
+			if ( '' === $customer_label && ! empty( $c['email'] ) ) {
+				$customer_label = (string) $c['email'];
+			}
+		}
 	}
 
 	if ( $booking_id_appt ) {
 		$got = meta_query( array( 'action' => 'get', 'entity' => 'appointment', 'id' => $booking_id_appt ) );
 		t( 'query get appointment', ok_arr( $got ) );
 
-		$upd = meta_book(
-			array(
-				'action'       => 'update',
-				'id'           => $booking_id_appt,
-				'internalNotes'=> 'MCP harness updated',
-				'extras'       => $extra_id ? array( array( 'extraId' => $extra_id, 'quantity' => 1 ) ) : array(),
-				'customFields' => $cf_map ?: array( '3' => 'updated locations' ),
+		$upd_args = array(
+			'action'           => 'update',
+			'id'               => $booking_id_appt,
+			'expectedCustomer' => $customer_label,
+			'internalNotes'    => 'MCP harness updated',
+			'extras'           => $extra_id ? array( array( 'extraId' => $extra_id, 'quantity' => 1 ) ) : array(),
+			'customFields'     => $cf_map ?: array( '3' => 'updated locations' ),
+		);
+
+		$no_mode = meta_book( $upd_args );
+		t( 'book update without dry_run refused', is_wp_error( $no_mode ) && 'dry_run_required' === $no_mode->get_error_code() );
+
+		$wrong_cust = meta_book(
+			array_merge(
+				$upd_args,
+				array(
+					'dry_run'          => true,
+					'expectedCustomer' => 'Definitely Not This Person XYZ',
+				)
 			)
 		);
+		t( 'book update wrong expectedCustomer refused', is_wp_error( $wrong_cust ) && 'expected_customer_mismatch' === $wrong_cust->get_error_code() );
+
+		$mixed = meta_book(
+			array(
+				'action'           => 'update',
+				'id'               => $booking_id_appt,
+				'expectedCustomer' => $customer_label,
+				'dry_run'          => true,
+				'internalNotes'    => 'x',
+				'bookingStart'     => $start,
+			)
+		);
+		t( 'book update notes+reschedule refused', is_wp_error( $mixed ) && 'mixed_update' === $mixed->get_error_code() );
+
+		$dry_u = meta_book( array_merge( $upd_args, array( 'dry_run' => true ) ) );
+		t( 'book update dry_run', ok_arr( $dry_u ) && ! empty( $dry_u['previewId'] ), is_wp_error( $dry_u ) ? $dry_u->get_error_message() : '' );
+		t( 'book update dry_run shows target apt', ok_arr( $dry_u ) && (int) ( $dry_u['target']['aptId'] ?? 0 ) === $booking_id_appt );
+
+		$bad_prv = meta_book( array_merge( $upd_args, array( 'confirm' => true, 'previewId' => 'prv_deadbeefdeadbeefdeadbeef' ) ) );
+		t( 'book update bad previewId refused', is_wp_error( $bad_prv ) && in_array( $bad_prv->get_error_code(), array( 'preview_expired', 'preview_mismatch', 'preview_required' ), true ) );
+
+		$upd = book_commit( $upd_args );
 		t( 'book update extras/CF', ok_arr( $upd ), is_wp_error( $upd ) ? $upd->get_error_message() : '' );
 
 		$no_notify = meta_book( array( 'action' => 'notify', 'id' => $booking_id_appt ) );
@@ -277,11 +355,12 @@ if ( $service_id && $provider_id && $customer_id ) {
 		t( 'book notify bad booking_id refused', is_wp_error( $bad_bid ) && 'no_bookings' === $bad_bid->get_error_code() );
 
 		// Persist notify=1, then note-only update must restore flag (not leave 0).
-		$with_notify = meta_book(
+		$with_notify = book_commit(
 			array(
-				'action' => 'update',
-				'id'     => $booking_id_appt,
-				'notify' => true,
+				'action'           => 'update',
+				'id'               => $booking_id_appt,
+				'expectedCustomer' => $customer_label,
+				'notify'           => true,
 			)
 		);
 		t( 'book update set notify true', ok_arr( $with_notify ), is_wp_error( $with_notify ) ? $with_notify->get_error_message() : '' );
@@ -291,11 +370,12 @@ if ( $service_id && $provider_id && $customer_id ) {
 		);
 		t( 'notifyParticipants stored 1', 1 === $flag_before );
 
-		$note_upd = meta_book(
+		$note_upd = book_commit(
 			array(
-				'action'        => 'update',
-				'id'            => $booking_id_appt,
-				'internalNotes' => 'MCP harness note after notify flag',
+				'action'           => 'update',
+				'id'               => $booking_id_appt,
+				'expectedCustomer' => $customer_label,
+				'internalNotes'    => 'MCP harness note after notify flag',
 			)
 		);
 		t( 'book update notes omit notify', ok_arr( $note_upd ), is_wp_error( $note_upd ) ? $note_upd->get_error_message() : '' );

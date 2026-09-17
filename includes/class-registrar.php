@@ -45,6 +45,7 @@ final class Registrar {
 		require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/class-entity-map.php';
 		require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/booking-payload.php';
 		require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/payment-payload.php';
+		require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/book-safety.php';
 		require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/meta-handlers.php';
 		require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/meta-mutate.php';
 		require_once HARUDIGI_AMELIA_MCP_DIR . 'includes/meta-book.php';
