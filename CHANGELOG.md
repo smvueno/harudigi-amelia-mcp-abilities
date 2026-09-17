@@ -6,6 +6,25 @@ All notable changes to **HaruDigi Booking Abilities for Amelia and Easy MCP AI**
 
 Format: [Keep a Changelog](https://keepachangelog.com/) · versions match plugin `Version` / git tags `vX.Y.Z`.
 
+## [2.1.0] - 2026-09-17
+
+### Added
+- `amelia/book action=create|update` requires two-step flow: `dry_run:true` → preview (no DB write) → `confirm:true` + same `previewId` + `expectedCustomer` → real write
+- `previewId` is a server-issued hash bound to (aptId + fields + customer). 10-minute TTL. Mismatch/expired/missing → refuse
+- `expectedCustomer` (string) required on update: matches customer firstName/lastName/email (case-insensitive, substring). Mismatch → refuse. Blocks ID-swap writes (Charlie-Lynch class)
+- `internalNotes` + `bookingStart` in same update → refused (single-concern guard)
+- `amelia/query action=list entity=appointment` defaults to today…+14d window when no dates given, and to `view=slim` compact rows (aptId/bookId/start/end/status/serviceName/customer/notesPreview/paySummary) — cuts list tokens 10–50×
+- Slim list response adds `{ window, page, limit, count, hasMore }` meta so models page inside the window
+- `book-safety.php` houses the preview store + assertion helpers
+- `scripts/full-audit.php` regression suite: 181/181 pass locally; CI flag for fails
+- Tool descriptions / `discover` / `help` updated to describe `dry_run → preview → confirm` flow and ID glossary
+
+### Fixed
+- `book action=create|update` no longer silently writes on a single call; first call without `dry_run` returns `dry_run_required`
+
+### Upgrade notice
+All agents calling `amelia/book action=create|update` must now do `dry_run:true` first, show the preview to the human, then call again with `confirm:true` + `previewId` + `expectedCustomer`. Cancel/delete/notify unchanged (still require `confirm:true`).
+
 ## [2.0.8] - 2026-09-12
 
 ### Added

@@ -4,7 +4,7 @@ Tags: amelia, booking, mcp, ai, abilities
 Requires at least: 6.9
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.0.8
+Stable tag: 2.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -84,6 +84,18 @@ Leave `notify` / `notifyParticipants` unset or false (the default). Only set tru
 
 == Changelog ==
 
+= 2.1.0 =
+* Added: `amelia/book action=create|update` requires two-step flow: `dry_run:true` → preview (no DB write) → `confirm:true` + same `previewId` + `expectedCustomer` → real write
+* Added: `previewId` is a server-issued hash bound to (aptId + fields + customer). 10-minute TTL. Mismatch/expired/missing → refuse
+* Added: `expectedCustomer` (string) required on update: matches customer firstName/lastName/email (case-insensitive, substring). Mismatch → refuse. Blocks ID-swap writes (Charlie-Lynch class)
+* Added: `internalNotes` + `bookingStart` in same update → refused (single-concern guard)
+* Added: `amelia/query action=list entity=appointment` defaults to today…+14d window when no dates given, and to `view=slim` compact rows (aptId/bookId/start/end/status/serviceName/customer/notesPreview/paySummary) — cuts list tokens 10–50×
+* Added: Slim list response adds `{ window, page, limit, count, hasMore }` meta so models page inside the window
+* Added: `book-safety.php` houses the preview store + assertion helpers
+* Added: `scripts/full-audit.php` regression suite: 181/181 pass locally; CI flag for fails
+* Added: Tool descriptions / `discover` / `help` updated to describe `dry_run → preview → confirm` flow and ID glossary
+* Fixed: `book action=create|update` no longer silently writes on a single call; first call without `dry_run` returns `dry_run_required`
+
 = 2.0.8 =
 * Added: `amelia/pay action=link` accepts `amount` (JPY) or `amount:"half"` for partial Stripe Checkout links
 * Added: Link response includes `chargedAmount`, `remainingAfter`, `bookingTotal`, `paidSoFar`
@@ -145,6 +157,9 @@ Leave `notify` / `notifyParticipants` unset or false (the default). Only set tru
 * Fixed: Appointment extras dropped on update
 
 == Upgrade Notice ==
+
+= 2.1.0 =
+All agents calling `amelia/book action=create|update` must now do `dry_run:true` first, show the preview to the human, then call again with `confirm:true` + `previewId` + `expectedCustomer`. Cancel/delete/notify unchanged (still require `confirm:true`).
 
 = 2.0.8 =
 Use `amelia/pay action=link amount=half` (or a JPY amount) for deposit links; send the returned Stripe URL to the client.
