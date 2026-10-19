@@ -123,7 +123,7 @@ final class Entity_Map {
 				'delete'   => array( DeleteUserController::class, 'POST', 'delete' ),
 				'status'   => array( UpdateProviderStatusController::class, 'POST' ),
 				'mutate'   => true,
-				'example'  => array( 'firstName' => 'Ada', 'lastName' => 'Photographer', 'email' => 'ada@example.com', 'type' => 'provider', 'status' => 'visible', 'externalId' => -1 ),
+				'example'  => array( 'firstName' => 'Ada', 'lastName' => 'Photographer', 'email' => 'ada@example.com', 'type' => 'provider', 'status' => 'visible' ),
 			),
 			'customer'      => array(
 				'label'    => 'Customer',

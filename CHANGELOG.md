@@ -6,6 +6,17 @@ All notable changes to **HaruDigi Booking Abilities for Amelia and Easy MCP AI**
 
 Format: [Keep a Changelog](https://keepachangelog.com/) · versions match plugin `Version` / git tags `vX.Y.Z`.
 
+## [2.1.1] - 2026-10-19
+
+### Fixed
+- Employee (provider) create sets `externalId` to empty string so Amelia 9.9+ has the key (no PHP warning) without linking a WordPress user. Unlike customers, providers reject `-1` (truthy role check)
+
+### Compatibility
+- Verified against Amelia Booking **9.9.1** and Easy MCP AI **2.2.0** (local: meta tests 50/50, full audit 181/181, Easy MCP HTTP tools/list shows exactly the 7 meta tools)
+
+### Upgrade notice
+No agent workflow changes. Safe drop-in after Amelia 9.9.x / Easy MCP 2.x.
+
 ## [2.1.0] - 2026-09-17
 
 ### Added

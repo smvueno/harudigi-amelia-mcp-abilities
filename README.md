@@ -11,7 +11,7 @@ Query, mutate, book, and pay without flooding agent context. Independent plugin 
 
 **Docs:** [smvueno.github.io/harudigi-amelia-mcp-abilities](https://smvueno.github.io/harudigi-amelia-mcp-abilities/)  
 **Author:** Jens Madsen · **Brand:** HaruDigi · **Site:** [harudigi.com](https://harudigi.com)  
-**Install slug:** `harudigi-booking-abilities-for-amelia` · **Version:** 2.0.7
+**Install slug:** `harudigi-booking-abilities-for-amelia` · **Version:** 2.1.1
 
 ---
 
@@ -60,8 +60,8 @@ Actions: `list`, `get`, `add`, `update`, `delete`, `link`.
 |-------------|--------|
 | WordPress 6.9+ | Tested through 7.1 |
 | PHP 7.4+ | |
-| **Easy MCP AI** | **Required** MCP host |
-| Amelia Booking **9.7+** | Required for abilities to run |
+| **Easy MCP AI** | **Required** MCP host (verified on **2.2.0**) |
+| Amelia Booking **9.7+** | Required for abilities to run (verified on **9.9.1**) |
 
 ## Install
 
@@ -77,7 +77,8 @@ Actions: `list`, `get`, `add`, `update`, `delete`, `link`.
 - Manual send: `amelia/book` `action=notify` + `confirm:true`
 - Booking `status` omitted → site `defaultAppointmentStatus`
 - Deletes / cancel / notify require `confirm: true`
-- Secrets redacted; customer **password** and WP **`externalId`** writes blocked (`externalId` forced unlinked `-1`)
+- Secrets redacted; customer **password** and WP **`externalId`** writes blocked (customers use unlinked `-1`; employees use empty `externalId` for Amelia 9.9+)
+- `amelia/book` create/update: `dry_run:true` → preview → `confirm:true` + `previewId` (+ `expectedCustomer` on update)
 
 ## Amelia Pro MCP vs this plugin
 

@@ -4,7 +4,7 @@ Tags: amelia, booking, mcp, ai, abilities
 Requires at least: 6.9
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.1.0
+Stable tag: 2.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -16,7 +16,7 @@ Compact Amelia Booking MCP for Easy MCP AI (7 meta abilities). Built by HaruDigi
 
 While active, this plugin unregisters Amelia Pro’s native abilities from the WordPress Abilities API so Easy MCP AI only sees the meta tools (natives duplicate coverage and hardcode approved on create). Amelia’s separate MCP HTTP endpoint is left alone; deactivate this plugin to restore natives.
 
-**Requires Amelia Booking 9.7+.** Easy MCP AI is required.
+**Requires Amelia Booking 9.7+** (verified on 9.9.1). Easy MCP AI is required (verified on 2.2.0).
 
 **Disclaimer:** Independent plugin by HaruDigi — not affiliated with or endorsed by TMS Software.
 
@@ -83,6 +83,10 @@ Leave `notify` / `notifyParticipants` unset or false (the default). Only set tru
 `amelia/pay` with `action=link` returns a checkout URL for the appointment’s remaining balance. Card checkout in a browser is out of scope for MCP.
 
 == Changelog ==
+
+= 2.1.1 =
+* Fixed: Employee (provider) create sets `externalId` to empty string so Amelia 9.9+ has the key (no PHP warning) without linking a WordPress user. Unlike customers, providers reject `-1` (truthy role check)
+* Verified against Amelia Booking 9.9.1 and Easy MCP AI 2.2.0 (local: meta tests 50/50, full audit 181/181, Easy MCP HTTP tools/list shows exactly the 7 meta tools)
 
 = 2.1.0 =
 * Added: `amelia/book action=create|update` requires two-step flow: `dry_run:true` → preview (no DB write) → `confirm:true` + same `previewId` + `expectedCustomer` → real write
@@ -157,6 +161,9 @@ Leave `notify` / `notifyParticipants` unset or false (the default). Only set tru
 * Fixed: Appointment extras dropped on update
 
 == Upgrade Notice ==
+
+= 2.1.1 =
+No agent workflow changes. Safe drop-in after Amelia 9.9.x / Easy MCP 2.x.
 
 = 2.1.0 =
 All agents calling `amelia/book action=create|update` must now do `dry_run:true` first, show the preview to the human, then call again with `confirm:true` + `previewId` + `expectedCustomer`. Cancel/delete/notify unchanged (still require `confirm:true`).

@@ -102,6 +102,12 @@ function meta_mutate( array $input = array() ) {
 				return $fields;
 			}
 		}
+		if ( 'employee' === $def['key'] ) {
+			$fields = prepare_employee_body( $fields );
+			if ( is_wp_error( $fields ) ) {
+				return $fields;
+			}
+		}
 		if ( 'extra' === $def['key'] ) {
 			$fields = prepare_extra_body( $fields );
 		}
@@ -239,6 +245,11 @@ function meta_mutate( array $input = array() ) {
 				$patch = prepare_category_body( $patch );
 			} elseif ( 'package' === $def['key'] ) {
 				$patch = prepare_package_body( $patch );
+			} elseif ( 'employee' === $def['key'] ) {
+				$patch = prepare_employee_body( $patch, false );
+				if ( is_wp_error( $patch ) ) {
+					return $patch;
+				}
 			} else {
 				$patch = Helpers::sanitize_write_body( $patch );
 			}
@@ -247,6 +258,46 @@ function meta_mutate( array $input = array() ) {
 	}
 
 	return new \WP_Error( 'invalid_action', __( 'mutate action must be create|update|delete|status.', 'harudigi-booking-abilities-for-amelia' ) );
+}
+
+/**
+ * Employee (provider) create/update body.
+ * Amelia 9.9+ reads externalId without isset; omit → PHP warning. MCP never links WP users.
+ *
+ * @param array<string,mixed> $fields
+ * @return array<string,mixed>|\WP_Error
+ */
+function prepare_employee_body( array $fields, bool $creating = true ) {
+	if ( $creating ) {
+		$first = sanitize_text_field( (string) ( $fields['firstName'] ?? '' ) );
+		if ( '' === $first ) {
+			return new \WP_Error( 'invalid_firstName', __( 'firstName is required.', 'harudigi-booking-abilities-for-amelia' ) );
+		}
+		$fields['firstName'] = $first;
+		$fields['lastName']  = sanitize_text_field( (string) ( $fields['lastName'] ?? '' ) );
+		$fields['type']      = 'provider';
+		$fields['status']    = sanitize_key( (string) ( $fields['status'] ?? 'visible' ) );
+	}
+	if ( array_key_exists( 'email', $fields ) ) {
+		$email_raw = trim( (string) $fields['email'] );
+		if ( '' === $email_raw ) {
+			$fields['email'] = '';
+		} else {
+			$email = sanitize_email( $email_raw );
+			if ( '' === $email || ! is_email( $email ) ) {
+				return new \WP_Error( 'invalid_email', __( 'email is invalid.', 'harudigi-booking-abilities-for-amelia' ) );
+			}
+			$fields['email'] = $email;
+		}
+	}
+	$clean = Helpers::sanitize_write_body( $fields );
+	// Create: Amelia 9.9+ reads externalId without isset (omit → warning). Providers do not
+	// remap -1→null like customers; -1 is truthy and fails role checks. Empty string = unlinked.
+	// Update: never send (would unlink / 409).
+	if ( $creating ) {
+		$clean['externalId'] = '';
+	}
+	return $clean;
 }
 
 /**
