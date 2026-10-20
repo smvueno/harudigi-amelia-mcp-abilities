@@ -4,7 +4,7 @@ Tags: amelia, booking, mcp, ai, abilities
 Requires at least: 6.9
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.1.1
+Stable tag: 2.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -84,6 +84,30 @@ Leave `notify` / `notifyParticipants` unset or false (the default). Only set tru
 
 == Changelog ==
 
+= 2.2.0 =
+* Added: Booking card in `amelia/book` create `dry_run` preview: service, provider, customer, time, extras by name, estimated total, status, email to client yes or no, and notes by label. Update previews get the same short summary.
+* Added: Custom fields can be written by field label as well as id (for example `{"Notes": "..."}`). Unknown or ambiguous labels are refused with the list of real fields.
+* Added: `amelia/query` get appointment adds `data.notesAndFields`: `privateNote` (staff only), `customerNote` (client profile), `sharedNote` (the booking field labelled Notes), plus all booking fields by name.
+* Added: `amelia/query` list responses echo `meta.appliedFilters` so agents can see which filters were really used.
+* Added: `amelia/pay` link responses add `computedFrom`, `rule`, and a warning that a payment link is not a payment until a row is paid.
+* Added: Human date words for booking lookup: `date_preset` accepts `today`, `tomorrow`, `upcoming`, `this_week`, `this_month`, and `day_N` (for example `day_10` for "the 10th"). The response echoes the real dates used.
+* Added: Slim appointment rows now carry `money` (total, paid, owed) so "what does this client owe" is one lookup.
+* Added: New tests: local harness now covers extras preview agreement, label writes, payment half rules, wrong id help, unknown parameters, availability with extras, date rules, and text validation.
+* Changed: `amount: "half"` on `amelia/pay` link now means: half of the total when nothing has been paid yet, and everything still owed once a payment has been made. The response states which rule was used.
+* Changed: `amelia/status` is slim (versions, counts, default status). Full settings are still available via `amelia/query` action=settings.
+* Changed: `amelia/pay` `amount` accepts a number as well as a string.
+* Fixed: Booking times are normalized by the plugin: common agent spellings (including ISO times with a timezone) are converted to one site time and shown in the preview. Ambiguous slash dates, date only values, relative words like "next friday", and impossible dates are refused at preview with `invalid_booking_start`. Search dates are validated the same way (`invalid_date`) instead of silently returning zero bookings.
+* Fixed: Book create preview now refuses a bad status, a missing customer or service, a provider who does not run that service, and an unknown coupon code, instead of accepting the preview and failing at confirm.
+* Fixed: Payment amounts that are not numbers (which were silently stored as 0), zero, or negative are refused with `invalid_amount` on add, update, and link.
+* Fixed: Emoji and other 4 byte characters in notes, custom fields, and customer text are refused with `invalid_characters` instead of being silently stored as question marks.
+* Fixed: Extras supplied inside `fields` on book update now persist like top level extras, and the preview shows the extras change for both shapes. Before, one shape previewed as a change but saved nothing, and the other saved but previewed as no change.
+* Fixed: Book update confirm returns `persisted` and `changed` read back from the saved appointment, so success means the change is really there.
+* Fixed: Unknown query parameters (for example `customerId` before it was supported, `bogus_xyz`, nested `params`) are refused with `unknown_parameter` and the supported keys, instead of being silently ignored. `customerId` on appointment lists now filters by that customer.
+* Fixed: `amelia/pay` with a booking id instead of a payment id returns `wrong_id_type` with the payment ids for that booking.
+* Fixed: Availability checks with extras no longer crash (extras are encoded the way Amelia expects).
+* Fixed: Extras that belong to a different service are refused at preview time with `extra_not_for_service` and the valid extras listed.
+* Fixed: Creating a catalog extra that already exists for the same service is refused with `duplicate_extra` and the existing id.
+
 = 2.1.1 =
 * Fixed: Employee (provider) create sets `externalId` to empty string so Amelia 9.9+ has the key (no PHP warning) without linking a WordPress user. Unlike customers, providers reject `-1` (truthy role check)
 * Verified against Amelia Booking 9.9.1 and Easy MCP AI 2.2.0 (local: meta tests 50/50, full audit 181/181, Easy MCP HTTP tools/list shows exactly the 7 meta tools)
@@ -161,6 +185,9 @@ Leave `notify` / `notifyParticipants` unset or false (the default). Only set tru
 * Fixed: Appointment extras dropped on update
 
 == Upgrade Notice ==
+
+= 2.2.0 =
+Payment `amount: "half"` after a partial payment now charges the full remaining balance. Agents should rely on the returned `rule` and `paidSoFar`.
 
 = 2.1.1 =
 No agent workflow changes. Safe drop-in after Amelia 9.9.x / Easy MCP 2.x.

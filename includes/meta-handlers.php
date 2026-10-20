@@ -88,7 +88,7 @@ function register_meta_abilities(): void {
 		array(
 			'label'        => __( 'Query Amelia', 'harudigi-booking-abilities-for-amelia' ),
 			'description'  => __(
-				'Read data. Required: action + entity (for list/get). Actions: list, get, stats, availability, booking_options, settings. Appointment list defaults: date window today→+14d, view=slim (compact rows with aptId+bookId). Override with date_from/date_to or dates; view=full for raw Amelia blobs; page/limit to page inside the window. Examples: {action:"list",entity:"appointment"}, {action:"list",entity:"appointment",date_from:"2026-09-17",date_to:"2026-09-17"}, {action:"get",entity:"appointment",id:12}.',
+				'Read data. Required: action + entity (for list/get). Actions: list, get, stats, availability, booking_options, settings. Appointment list defaults: date window today→+14d, view=slim (compact rows with aptId+bookId). Override with date_from/date_to (Y-m-d only) or date_preset (today, tomorrow, upcoming, this_week, this_month, day_N); use date_preset=day_10 for "on the 10th"; explicit dates win over preset. When the user asks for a specific day or preset, answer only from that window. view=full for raw Amelia blobs; page/limit to page inside the window. Examples: {action:"list",entity:"appointment"}, {action:"list",entity:"appointment",date_preset:"tomorrow"}, {action:"get",entity:"appointment",id:12}.',
 				'harudigi-booking-abilities-for-amelia'
 			),
 			'callback'     => __NAMESPACE__ . '\\meta_query',
@@ -108,10 +108,13 @@ function register_meta_abilities(): void {
 					'limit'         => array( 'type' => 'integer' ),
 					'search'        => array( 'type' => 'string' ),
 					'status'        => array( 'type' => 'string' ),
-					'date_from'     => array( 'type' => 'string', 'description' => 'YYYY-MM-DD (with date_to → dates window).' ),
-					'date_to'       => array( 'type' => 'string', 'description' => 'YYYY-MM-DD.' ),
+					'date_from'     => array( 'type' => 'string', 'description' => 'YYYY-MM-DD only (with date_to → dates window).' ),
+					'date_to'       => array( 'type' => 'string', 'description' => 'YYYY-MM-DD only.' ),
+					'date_preset'   => array( 'type' => 'string', 'description' => 'today|tomorrow|upcoming|this_week|this_month|day_N (N 1-31, for example day_10 for "on the 10th", next such date). Ignored if date_from/date_to/dates supplied.' ),
 					'view'          => array( 'type' => 'string', 'description' => 'appointment list: slim (default) | full.' ),
 					'serviceId'     => array( 'type' => 'integer' ),
+					'customerId'    => array( 'type' => 'integer', 'description' => 'Appointment list: filter to one customer (mapped to Amelia customers).' ),
+					'customers'     => array( 'type' => 'array', 'items' => array( 'type' => 'integer' ), 'description' => 'Appointment list: filter to these customer ids.' ),
 					'providerIds'   => array( 'type' => 'array', 'items' => array( 'type' => 'integer' ) ),
 					'startDateTime' => array( 'type' => 'string' ),
 					'endDateTime'   => array( 'type' => 'string' ),
@@ -156,7 +159,7 @@ function register_meta_abilities(): void {
 		array(
 			'label'        => __( 'Book / Manage Appointments', 'harudigi-booking-abilities-for-amelia' ),
 			'description'  => __(
-				'Create/update/cancel appointments and events. id = appointmentId ONLY (never bookingId; pay uses bookingId). WRITE PROTOCOL: (1) dry_run:true → preview + previewId, no DB write (2) show preview to human (3) confirm:true + same fields + previewId. Updates also need expectedCustomer (name or email). Never mix internalNotes + bookingStart in one update. Cancel/delete/notify need confirm:true. notify defaults FALSE. Create needs: serviceId, providerId, customerId, bookingStart. Actions: create, update, cancel, delete, set_status, notify, create_event, update_event, delete_event, book_event.',
+				'Create/update/cancel appointments and events. id = appointmentId ONLY (never bookingId; pay uses bookingId). WRITE PROTOCOL: (1) dry_run:true → preview + previewId, no DB write (2) show preview to human (3) confirm:true + same fields + previewId. Updates also need expectedCustomer (name or email). Never mix internalNotes + bookingStart in one update. Cancel/delete/notify need confirm:true. notify defaults FALSE. Create needs: serviceId, providerId, customerId, bookingStart. bookingStart must be Y-m-d H:i or ISO 8601 with offset (converted to site time); date-only, slash dates, and relative words are rejected. Actions: create, update, cancel, delete, set_status, notify, create_event, update_event, delete_event, book_event.',
 				'harudigi-booking-abilities-for-amelia'
 			),
 			'callback'     => __NAMESPACE__ . '\\meta_book',
@@ -173,7 +176,7 @@ function register_meta_abilities(): void {
 					'serviceId'          => array( 'type' => 'integer' ),
 					'providerId'         => array( 'type' => 'integer' ),
 					'customerId'         => array( 'type' => 'integer' ),
-					'bookingStart'       => array( 'type' => 'string' ),
+					'bookingStart'       => array( 'type' => 'string', 'description' => 'Y-m-d H:i or ISO 8601 Y-m-dTH:i[:s] with optional Z/offset, converted to site time. Date-only, slash dates, relative words rejected.' ),
 					'locationId'         => array( 'type' => 'integer' ),
 					'persons'            => array( 'type' => 'integer' ),
 					'duration'           => array( 'type' => array( 'integer', 'string' ), 'description' => 'Seconds or "1h"/"90m".' ),
@@ -188,7 +191,7 @@ function register_meta_abilities(): void {
 					),
 					'customFields'       => array(
 						'type'                 => 'object',
-						'description'          => 'Map fieldId → value string, or Amelia-shaped objects.',
+						'description'          => 'Map field label or fieldId to value string, e.g. {"Notes":"..."} or {"3":"..."}, or Amelia-shaped objects.',
 						'additionalProperties' => true,
 					),
 					'couponCode'         => array( 'type' => 'string' ),
@@ -227,7 +230,8 @@ function register_meta_abilities(): void {
 					'fields'      => array( 'type' => 'object' ),
 					'gateway'     => array( 'type' => 'string' ),
 					'status'      => array( 'type' => 'string' ),
-					'amount'      => array( 'type' => 'string', 'description' => 'For add/update: JPY number. For link: JPY number or "half". Omit on link = full remaining.' ),
+					'amount'      => array( 'type' => array( 'string', 'number' ), 'description' => 'For add/update: JPY number. For link: JPY number or "half". Omit on link = full remaining.' ),
+					'customerBookingId' => array( 'type' => 'integer', 'description' => 'Customer booking id (for add). Not a payment id: link/get/update/delete need id = payment id.' ),
 					'confirm'     => array( 'type' => 'boolean' ),
 					'page'        => array( 'type' => 'integer' ),
 					'limit'       => array( 'type' => 'integer' ),
@@ -251,11 +255,13 @@ function meta_help( array $input = array() ) {
 			'amelia/pay'      => 'Payments + links.',
 		),
 		'workflow_book' => array(
-			'1' => 'amelia/query action=list entity=appointment — slim rows today→+14d (aptId + bookId). Narrow with date_from/date_to.',
+			'1' => 'amelia/query action=list entity=appointment — slim rows today→+14d (aptId + bookId). Narrow with date_from/date_to (Y-m-d only) or date_preset: today, tomorrow, upcoming, this_week, this_month, day_N (use date_preset=day_10 for "on the 10th").',
 			'2' => 'Writes: dry_run:true first → show previewId/changes to human → confirm:true + previewId (+ expectedCustomer on update).',
 			'3' => 'id on book = appointmentId only. bookingId is for amelia/pay. Never mix internalNotes + bookingStart.',
 			'4' => 'Create: booking_options → dry_run create → confirm create. Omit status (site default); notify false unless human said yes.',
 			'5' => 'Manual resend: amelia/book action=notify id=APPOINTMENT_ID confirm:true.',
+			'6' => 'bookingStart: use Y-m-d H:i or ISO 8601 with offset (converted to site time, example 2026-12-20 10:00). Date only, slash dates, and words like tomorrow are rejected.',
+			'7' => 'When the user asks for a specific day or preset, answer only from that window.',
 		),
 		'workflow_pay'  => array(
 			'full_link'   => 'amelia/pay action=link id=PAYMENT_ID gateway=stripe — returns buy.stripe.com URL for full remaining. Send that URL to the client (not an Amelia site link).',
@@ -293,9 +299,15 @@ function meta_help( array $input = array() ) {
 		'shapes'      => array(
 			'extras'       => array( array( 'extraId' => 1, 'quantity' => 1 ) ),
 			'customFields' => array(
-				'3' => 'Preferred locations text',
-				'4' => 'WhatsApp',
+				'3'     => 'Preferred locations text',
+				'4'     => 'WhatsApp',
+				'Notes' => 'Shared note text (label keys work, ids also work)',
 			),
+		),
+		'notes'       => array(
+			'privateNote'  => 'amelia/book internalNotes. Staff only, never emailed.',
+			'customerNote' => 'amelia/mutate customer fields.note. Follows the client across bookings.',
+			'sharedNote'   => 'Booking custom field labelled Notes. Read it in notesAndFields on amelia/query get appointment. Write it with amelia/book customFields {"Notes":"..."}.',
 		),
 		'entities'    => Entity_Map::keys(),
 	);
@@ -309,7 +321,7 @@ function meta_status( array $input = array() ) {
 		return $base;
 	}
 	$base['defaultAppointmentStatus'] = get_default_appointment_status();
-	$base['settings_summary']         = Helpers::settings_summary();
+	$base['settings_via']             = 'amelia/query action=settings';
 	return $base;
 }
 
@@ -386,6 +398,177 @@ function meta_discover( array $input = array() ) {
 	return $out;
 }
 
+/**
+ * Reject unknown keys on query list/get so typos are not silently ignored.
+ *
+ * @param array<string,mixed> $input
+ * @return \WP_Error|null
+ */
+/** @return string[] */
+function query_date_presets(): array {
+	return array( 'today', 'tomorrow', 'upcoming', 'this_week', 'this_month' );
+}
+
+/** Day-of-month preset like day_10, or null when not a valid day_N preset. */
+function query_day_preset_day( string $preset ) {
+	if ( ! preg_match( '/^day_(\d{1,2})$/', $preset, $m ) ) {
+		return null;
+	}
+	$day = (int) $m[1];
+	return ( $day >= 1 && $day <= 31 ) ? $day : null;
+}
+
+function query_is_valid_date_preset( string $preset ): bool {
+	// Malformed or out-of-range day_N is not valid and gets invalid_date_preset.
+	return in_array( $preset, query_date_presets(), true ) || null !== query_day_preset_day( $preset );
+}
+
+/** @return array{0:string,1:string} */
+function query_preset_window( string $preset ): array {
+	$tz    = wp_timezone();
+	$today = new \DateTimeImmutable( 'today', $tz );
+	$day_n = query_day_preset_day( $preset );
+	if ( null !== $day_n ) {
+		// Next date with this day-of-month, today included, skipping short months.
+		for ( $offset = 0; $offset < 12; ++$offset ) {
+			$first = $today->modify( 'first day of this month' )->modify( '+' . $offset . ' months' );
+			if ( $day_n > (int) $first->format( 't' ) ) {
+				continue;
+			}
+			$candidate = $first->setDate( (int) $first->format( 'Y' ), (int) $first->format( 'm' ), $day_n );
+			if ( $candidate < $today ) {
+				continue;
+			}
+			return array( $candidate->format( 'Y-m-d' ), $candidate->format( 'Y-m-d' ) );
+		}
+		return array( $today->format( 'Y-m-d' ), $today->format( 'Y-m-d' ) );
+	}
+	switch ( $preset ) {
+		case 'tomorrow':
+			$d = $today->modify( '+1 day' );
+			return array( $d->format( 'Y-m-d' ), $d->format( 'Y-m-d' ) );
+		case 'upcoming':
+			return array( $today->format( 'Y-m-d' ), $today->modify( '+365 days' )->format( 'Y-m-d' ) );
+		case 'this_week':
+			$monday = $today->modify( '-' . ( (int) $today->format( 'N' ) - 1 ) . ' days' );
+			return array( $monday->format( 'Y-m-d' ), $monday->modify( '+6 days' )->format( 'Y-m-d' ) );
+		case 'this_month':
+			return array( $today->format( 'Y-m-01' ), $today->format( 'Y-m-t' ) );
+		case 'today':
+		default:
+			return array( $today->format( 'Y-m-d' ), $today->format( 'Y-m-d' ) );
+	}
+}
+
+/** @param array<string,mixed> $input @return \WP_Error|null */
+function query_validate_explicit_dates( array $input ) {
+	$check = static function ( $value, string $field ) {
+		$v = trim( (string) $value );
+		if ( '' === $v || is_strict_ymd( $v ) ) {
+			return null;
+		}
+		return new \WP_Error(
+			'invalid_date',
+			sprintf(
+				/* translators: 1: field 2: received value */
+				__( 'Invalid %1$s "%2$s". Use Y-m-d only, for example 2026-12-20, or use date_preset with one of: today, tomorrow, upcoming, this_week, this_month, day_N (for example day_10).', 'harudigi-booking-abilities-for-amelia' ),
+				$field,
+				$v
+			)
+		);
+	};
+	foreach ( array( 'date_from', 'date_to' ) as $f ) {
+		if ( isset( $input[ $f ] ) ) {
+			$e = $check( $input[ $f ], $f );
+			if ( $e ) {
+				return $e;
+			}
+		}
+	}
+	if ( isset( $input['dates'] ) ) {
+		if ( is_array( $input['dates'] ) ) {
+			foreach ( array_values( $input['dates'] ) as $i => $v ) {
+				$e = $check( $v, 'dates[' . $i . ']' );
+				if ( $e ) {
+					return $e;
+				}
+			}
+		} elseif ( '' !== trim( (string) $input['dates'] ) ) {
+			return $check( $input['dates'], 'dates' );
+		}
+	}
+	return null;
+}
+
+function query_unknown_parameter_error( array $input ) {
+	$allowed = array( 'action', 'entity', 'id', 'page', 'limit', 'per_page', 'search', 'status', 'date_from', 'date_to', 'date_preset', 'dates', 'view', 'serviceId', 'service_id', 'providerIds', 'providers', 'locations', 'customers', 'customerId', 'for_events', 'startDateTime', 'endDateTime', 'persons', 'serviceDuration', 'extras' );
+	foreach ( array_keys( $input ) as $key ) {
+		if ( in_array( (string) $key, $allowed, true ) ) {
+			continue;
+		}
+		$suggestion = '';
+		if ( 'params' === $key ) {
+			$suggestion = __( ' Suggestion: pass filters directly at top level instead of nested under params.', 'harudigi-booking-abilities-for-amelia' );
+		} elseif ( in_array( (string) $key, array( 'date', 'startDate', 'endDate' ), true ) ) {
+			$suggestion = __( ' Suggestion: use date_from and date_to (YYYY-MM-DD) for the date window.', 'harudigi-booking-abilities-for-amelia' );
+		}
+		return new \WP_Error(
+			'unknown_parameter',
+			sprintf(
+				/* translators: 1: bad key 2: supported keys 3: suggestion */
+				__( 'Unknown parameter "%1$s". Supported keys: %2$s.%3$s', 'harudigi-booking-abilities-for-amelia' ),
+				(string) $key,
+				implode( ', ', $allowed ),
+				$suggestion
+			)
+		);
+	}
+	return null;
+}
+
+/**
+ * Filters actually applied to an appointment list, echoed back in meta.
+ *
+ * @param array<string,mixed> $input
+ * @param array<string,mixed> $params Amelia list params after mapping.
+ * @param array{0:string,1:string} $window
+ * @return array<string,mixed>
+ */
+function query_applied_filters( array $input, array $params, array $window ): array {
+	$applied = array( 'dates' => $window );
+	if ( ! empty( $input['date_preset'] ) ) {
+		$applied['date_preset'] = strtolower( trim( (string) $input['date_preset'] ) );
+		$has_explicit = ! empty( $input['date_from'] ) || ! empty( $input['date_to'] ) || ! empty( $input['dates'] );
+		if ( $has_explicit ) {
+			$applied['date_preset_ignored'] = true;
+		}
+	}
+	foreach ( array( 'status', 'search' ) as $k ) {
+		if ( isset( $params[ $k ] ) && '' !== $params[ $k ] ) {
+			$applied[ $k ] = $params[ $k ];
+		}
+	}
+	if ( ! empty( $params['customers'] ) ) {
+		$applied['customers'] = array_values( array_map( 'intval', (array) $params['customers'] ) );
+	}
+	if ( ! empty( $input['customerId'] ) ) {
+		$applied['customerId'] = (int) $input['customerId'];
+	}
+	if ( ! empty( $params['services'] ) ) {
+		$applied['services'] = array_values( array_map( 'intval', (array) $params['services'] ) );
+	}
+	if ( ! empty( $input['serviceId'] ) || ! empty( $input['service_id'] ) ) {
+		$applied['serviceId'] = (int) ( $input['serviceId'] ?? $input['service_id'] );
+	}
+	if ( ! empty( $params['providers'] ) ) {
+		$applied['providers'] = array_values( array_map( 'intval', (array) $params['providers'] ) );
+	}
+	if ( ! empty( $params['locations'] ) ) {
+		$applied['locations'] = $params['locations'];
+	}
+	return $applied;
+}
+
 /** @param array<string,mixed> $input @return array<string,mixed>|\WP_Error */
 function meta_query( array $input = array() ) {
 	$action = strtolower( (string) ( $input['action'] ?? '' ) );
@@ -394,6 +577,10 @@ function meta_query( array $input = array() ) {
 		return Helpers::settings_summary();
 	}
 	if ( 'stats' === $action ) {
+		$date_err = query_validate_explicit_dates( $input );
+		if ( $date_err ) {
+			return $date_err;
+		}
 		$params = Helpers::list_params( $input );
 		if ( empty( $params['dates'] ) || ! is_array( $params['dates'] ) || 2 !== count( $params['dates'] ) ) {
 			$params['dates'] = array( wp_date( 'Y-m-d', strtotime( '-30 days' ) ), wp_date( 'Y-m-d' ) );
@@ -430,7 +617,8 @@ function meta_query( array $input = array() ) {
 		}
 		$extras = normalize_booking_extras( $input['extras'] ?? array(), 'id' );
 		if ( $extras ) {
-			$params['extras'] = $extras;
+			// GetTimeSlotsController json_decodes this param, so it must be a JSON string, not an array.
+			$params['extras'] = wp_json_encode( $extras );
 		}
 		$result = Helpers::invoke( GetTimeSlotsController::class, $params, array(), 'GET' );
 		if ( is_wp_error( $result ) ) {
@@ -453,6 +641,10 @@ function meta_query( array $input = array() ) {
 	}
 
 	if ( 'list' === $action ) {
+		$unknown = query_unknown_parameter_error( $input );
+		if ( $unknown ) {
+			return $unknown;
+		}
 		if ( empty( $def['list'] ) ) {
 			return new \WP_Error( 'unsupported', __( 'List not supported for this entity.', 'harudigi-booking-abilities-for-amelia' ) );
 		}
@@ -466,6 +658,29 @@ function meta_query( array $input = array() ) {
 
 		// Appointments: default date window + slim rows for agent context diet.
 		if ( 'appointment' === $def['key'] ) {
+			$date_err = query_validate_explicit_dates( $input );
+			if ( $date_err ) {
+				return $date_err;
+			}
+			$preset = isset( $input['date_preset'] ) ? strtolower( trim( (string) $input['date_preset'] ) ) : '';
+			$preset_used = false;
+			if ( '' !== $preset ) {
+				if ( ! query_is_valid_date_preset( $preset ) ) {
+					return new \WP_Error(
+						'invalid_date_preset',
+						sprintf(
+							/* translators: %s: received preset */
+							__( 'Invalid date_preset "%s". Use one of: today, tomorrow, upcoming, this_week, this_month, or day_N with N from 1 to 31 (for example day_10 for the 10th).', 'harudigi-booking-abilities-for-amelia' ),
+							$preset
+						)
+					);
+				}
+				$has_explicit = ! empty( $input['date_from'] ) || ! empty( $input['date_to'] ) || ! empty( $input['dates'] );
+				if ( ! $has_explicit ) {
+					$params['dates'] = query_preset_window( $preset );
+					$preset_used = true;
+				}
+			}
 			$view = strtolower( (string) ( $input['view'] ?? 'slim' ) );
 			if ( '' === $view ) {
 				$view = 'slim';
@@ -489,6 +704,7 @@ function meta_query( array $input = array() ) {
 			if ( is_wp_error( $result ) ) {
 				return $result;
 			}
+			$applied = query_applied_filters( $input, $params, $window );
 			if ( 'full' === $view ) {
 				if ( is_array( $result ) ) {
 					$result['meta'] = array(
@@ -497,6 +713,7 @@ function meta_query( array $input = array() ) {
 						'limit'   => $limit,
 						'view'    => 'full',
 						'defaultWindowApplied' => ! $had_dates,
+						'appliedFilters' => $applied,
 					);
 				}
 				return $result;
@@ -505,7 +722,25 @@ function meta_query( array $input = array() ) {
 				return $result;
 			}
 			$slim = book_slim_appointments_result( $result, $window, $page, $limit );
+			if ( $preset_used && 'upcoming' === $preset && empty( $input['status'] ) && empty( $params['status'] ) ) {
+				$rows = isset( $slim['data']['appointments'] ) && is_array( $slim['data']['appointments'] ) ? $slim['data']['appointments'] : array();
+				$rows = array_values(
+					array_filter(
+						$rows,
+						static function ( $row ) {
+							$st = is_array( $row ) ? strtolower( (string) ( $row['status'] ?? '' ) ) : '';
+							return ! in_array( $st, array( 'canceled', 'cancelled', 'rejected' ), true );
+						}
+					)
+				);
+				// Spec asks canceled/rejected; cancelled spelling also excluded if Amelia ever returns it.
+				$slim['data']['appointments'] = $rows;
+				$slim['meta']['count'] = count( $rows );
+				$slim['meta']['hasMore'] = count( $rows ) >= $limit;
+				$applied['excludedStatuses'] = array( 'canceled', 'rejected' );
+			}
 			$slim['meta']['defaultWindowApplied'] = ! $had_dates;
+			$slim['meta']['appliedFilters']       = $applied;
 			return $slim;
 		}
 
@@ -513,6 +748,10 @@ function meta_query( array $input = array() ) {
 	}
 
 	if ( 'get' === $action ) {
+		$unknown = query_unknown_parameter_error( $input );
+		if ( $unknown ) {
+			return $unknown;
+		}
 		if ( empty( $def['get'] ) ) {
 			return new \WP_Error( 'unsupported', __( 'Get-by-id not supported; use list or booking_options.', 'harudigi-booking-abilities-for-amelia' ) );
 		}
@@ -520,7 +759,15 @@ function meta_query( array $input = array() ) {
 		if ( is_wp_error( $id ) ) {
 			return $id;
 		}
-		return Helpers::invoke( $def['get'][0], array(), array( 'id' => $id ), $def['get'][1] );
+		$result = Helpers::invoke( $def['get'][0], array(), array( 'id' => $id ), $def['get'][1] );
+		if ( 'appointment' === $def['key'] && is_array( $result ) && isset( $result['data'] ) && is_array( $result['data'] ) ) {
+			$apt = $result['data']['appointment'] ?? $result['data'];
+			if ( is_array( $apt ) ) {
+				// Read the three note areas by name, next to the original payload.
+				$result['data']['notesAndFields'] = appointment_notes_and_fields( $apt );
+			}
+		}
+		return $result;
 	}
 
 	return new \WP_Error(

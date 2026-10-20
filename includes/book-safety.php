@@ -218,7 +218,9 @@ function book_collect_update_patch_keys( array $input ): array {
 	if ( isset( $input['fields'] ) && is_array( $input['fields'] ) ) {
 		$patch = $input['fields'];
 	}
-	foreach ( array( 'bookingStart', 'providerId', 'serviceId', 'locationId', 'internalNotes' ) as $k ) {
+	// Appointment-level and booking-level keys behave the same at top level
+	// or inside fields{} (top level wins, mirroring the appointment keys).
+	foreach ( array( 'bookingStart', 'providerId', 'serviceId', 'locationId', 'internalNotes', 'persons', 'status', 'duration', 'extras', 'customFields', 'couponCode' ) as $k ) {
 		if ( array_key_exists( $k, $input ) ) {
 			$patch[ $k ] = $input[ $k ];
 		}
@@ -226,6 +228,29 @@ function book_collect_update_patch_keys( array $input ): array {
 	// Ignore notify flags for concern check.
 	unset( $patch['notify'], $patch['notifyParticipants'] );
 	return $patch;
+}
+
+/**
+ * Extras as a stable [{extraId,quantity}] list for preview / read-back compares.
+ *
+ * @param mixed $raw Extras list (incoming shape or existing booking shape).
+ * @return array<int, array{extraId:int,quantity:int}>
+ */
+function book_extras_preview_shape( $raw ): array {
+	$out = array();
+	foreach ( normalize_booking_extras( $raw, 'extraId' ) as $row ) {
+		$out[] = array(
+			'extraId'  => (int) $row['extraId'],
+			'quantity' => (int) $row['quantity'],
+		);
+	}
+	usort(
+		$out,
+		static function ( $a, $b ) {
+			return $a['extraId'] <=> $b['extraId'];
+		}
+	);
+	return $out;
 }
 
 /**
@@ -267,11 +292,28 @@ function book_build_update_preview( array $appointment, array $patch, string $ex
 
 	$changes   = array();
 	$unchanged = array( 'status', 'payments', 'serviceId', 'providerId' );
+	$booking_keys = array( 'persons', 'status', 'duration', 'extras', 'customFields', 'couponCode' );
 	foreach ( $patch as $field => $after ) {
 		if ( in_array( $field, array( 'bookings', 'notifyParticipants', 'notify' ), true ) ) {
 			continue;
 		}
 		$before = $appointment[ $field ] ?? null;
+		if ( in_array( $field, $booking_keys, true ) && is_array( $booking ) ) {
+			$before = $booking[ $field ] ?? $before;
+		}
+		if ( 'extras' === $field ) {
+			$before = book_extras_preview_shape( is_array( $booking ) ? ( $booking['extras'] ?? array() ) : array() );
+			$after  = book_extras_preview_shape( $after );
+		}
+		if ( 'customFields' === $field ) {
+			// Compare by field id after label resolution, not raw input shapes.
+			// Updates merge onto existing fields, so preview the merged result.
+			$before   = booking_custom_field_values_by_id( is_array( $booking ) ? ( $booking['customFields'] ?? null ) : null );
+			$expanded = expand_custom_fields_for_booking( $after, (int) ( $appointment['serviceId'] ?? 0 ) );
+			$incoming = is_wp_error( $expanded ) ? booking_custom_field_values_by_id( $after ) : booking_custom_field_values_by_id( $expanded );
+			$after    = array_replace( $before, $incoming );
+			ksort( $after );
+		}
 		if ( 'internalNotes' === $field ) {
 			$before = (string) ( $appointment['internalNotes'] ?? '' );
 			$after  = (string) $after;
@@ -371,6 +413,19 @@ function book_slim_appointment_row( array $apt ): array {
 		}
 	}
 
+	$total = 0.0;
+	if ( $booking ) {
+		$total = isset( $booking['price'] ) && is_numeric( $booking['price'] ) ? (float) $booking['price'] : 0.0;
+		if ( ! empty( $booking['extras'] ) && is_array( $booking['extras'] ) ) {
+			foreach ( $booking['extras'] as $ex ) {
+				if ( is_array( $ex ) && isset( $ex['price'] ) && is_numeric( $ex['price'] ) ) {
+					$total += (float) $ex['price'] * max( 0, (int) ( $ex['quantity'] ?? 1 ) );
+				}
+			}
+		}
+	}
+	$owed = max( 0.0, $total - $paid );
+
 	$service = $apt['service'] ?? null;
 	$service_name = is_array( $service ) ? (string) ( $service['name'] ?? '' ) : '';
 
@@ -391,6 +446,11 @@ function book_slim_appointment_row( array $apt ): array {
 			'count'   => $pay_n,
 			'paid'    => $paid,
 			'pending' => $pending,
+		),
+		'money'               => array(
+			'total' => $total,
+			'paid'  => $paid,
+			'owed'  => $owed,
 		),
 	);
 }

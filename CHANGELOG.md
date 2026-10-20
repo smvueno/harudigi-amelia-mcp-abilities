@@ -6,6 +6,39 @@ All notable changes to **HaruDigi Booking Abilities for Amelia and Easy MCP AI**
 
 Format: [Keep a Changelog](https://keepachangelog.com/) · versions match plugin `Version` / git tags `vX.Y.Z`.
 
+## [2.2.0] - 2026-10-20
+
+### Added
+- Booking card in `amelia/book` create `dry_run` preview: service, provider, customer, time, extras by name, estimated total, status, email to client yes or no, and notes by label. Update previews get the same short summary.
+- Custom fields can be written by field label as well as id (for example `{"Notes": "..."}`). Unknown or ambiguous labels are refused with the list of real fields.
+- `amelia/query` get appointment adds `data.notesAndFields`: `privateNote` (staff only), `customerNote` (client profile), `sharedNote` (the booking field labelled Notes), plus all booking fields by name.
+- `amelia/query` list responses echo `meta.appliedFilters` so agents can see which filters were really used.
+- `amelia/pay` link responses add `computedFrom`, `rule`, and a warning that a payment link is not a payment until a row is paid.
+- Human date words for booking lookup: `date_preset` accepts `today`, `tomorrow`, `upcoming`, `this_week`, `this_month`, and `day_N` (for example `day_10` for "the 10th"). The response echoes the real dates used.
+- Slim appointment rows now carry `money` (total, paid, owed) so "what does this client owe" is one lookup.
+- New tests: local harness now covers extras preview agreement, label writes, payment half rules, wrong id help, unknown parameters, availability with extras, date rules, and text validation.
+
+### Changed
+- `amount: "half"` on `amelia/pay` link now means: half of the total when nothing has been paid yet, and everything still owed once a payment has been made. The response states which rule was used.
+- `amelia/status` is slim (versions, counts, default status). Full settings are still available via `amelia/query` action=settings.
+- `amelia/pay` `amount` accepts a number as well as a string.
+
+### Fixed
+- Booking times are normalized by the plugin: common agent spellings (including ISO times with a timezone) are converted to one site time and shown in the preview. Ambiguous slash dates, date only values, relative words like "next friday", and impossible dates are refused at preview with `invalid_booking_start`. Search dates are validated the same way (`invalid_date`) instead of silently returning zero bookings.
+- Book create preview now refuses a bad status, a missing customer or service, a provider who does not run that service, and an unknown coupon code, instead of accepting the preview and failing at confirm.
+- Payment amounts that are not numbers (which were silently stored as 0), zero, or negative are refused with `invalid_amount` on add, update, and link.
+- Emoji and other 4 byte characters in notes, custom fields, and customer text are refused with `invalid_characters` instead of being silently stored as question marks.
+- Extras supplied inside `fields` on book update now persist like top level extras, and the preview shows the extras change for both shapes. Before, one shape previewed as a change but saved nothing, and the other saved but previewed as no change.
+- Book update confirm returns `persisted` and `changed` read back from the saved appointment, so success means the change is really there.
+- Unknown query parameters (for example `customerId` before it was supported, `bogus_xyz`, nested `params`) are refused with `unknown_parameter` and the supported keys, instead of being silently ignored. `customerId` on appointment lists now filters by that customer.
+- `amelia/pay` with a booking id instead of a payment id returns `wrong_id_type` with the payment ids for that booking.
+- Availability checks with extras no longer crash (extras are encoded the way Amelia expects).
+- Extras that belong to a different service are refused at preview time with `extra_not_for_service` and the valid extras listed.
+- Creating a catalog extra that already exists for the same service is refused with `duplicate_extra` and the existing id.
+
+### Upgrade notice
+Payment `amount: "half"` after a partial payment now charges the full remaining balance. Agents should rely on the returned `rule` and `paidSoFar`.
+
 ## [2.1.1] - 2026-10-19
 
 ### Fixed

@@ -110,6 +110,10 @@ function meta_mutate( array $input = array() ) {
 		}
 		if ( 'extra' === $def['key'] ) {
 			$fields = prepare_extra_body( $fields );
+			$dup    = assert_no_duplicate_extra( $fields );
+			if ( is_wp_error( $dup ) ) {
+				return $dup;
+			}
 		}
 		if ( 'category' === $def['key'] ) {
 			$fields = prepare_category_body( $fields );
@@ -305,6 +309,12 @@ function prepare_employee_body( array $fields, bool $creating = true ) {
  * @return array<string,mixed>|\WP_Error
  */
 function prepare_customer_body( array $fields, bool $creating = true ) {
+	$text_check = Helpers::assert_plain_text_fields(
+		array_intersect_key( $fields, array_flip( array( 'firstName', 'lastName', 'note', 'email' ) ) )
+	);
+	if ( is_wp_error( $text_check ) ) {
+		return $text_check;
+	}
 	if ( $creating ) {
 		$first = sanitize_text_field( (string) ( $fields['firstName'] ?? '' ) );
 		if ( '' === $first ) {
@@ -336,6 +346,58 @@ function prepare_customer_body( array $fields, bool $creating = true ) {
 		$clean['externalId'] = -1;
 	}
 	return $clean;
+}
+
+/**
+ * Refuse creating an extra that already exists for the same service (same name).
+ *
+ * @param array<string,mixed> $fields Prepared extra body.
+ * @return true|\WP_Error
+ */
+function assert_no_duplicate_extra( array $fields ) {
+	$name = trim( (string) ( $fields['name'] ?? '' ) );
+	if ( '' === $name ) {
+		return true;
+	}
+	$service_id = isset( $fields['serviceId'] ) ? (int) $fields['serviceId'] : 0;
+	$listed     = Helpers::invoke(
+		\AmeliaBooking\Application\Controller\Bookable\Extra\GetExtrasController::class,
+		array(),
+		array(),
+		'GET'
+	);
+	if ( is_wp_error( $listed ) ) {
+		return true;
+	}
+	$data = isset( $listed['data'] ) && is_array( $listed['data'] ) ? $listed['data'] : $listed;
+	$all  = $data['extras'] ?? $data;
+	if ( ! is_array( $all ) ) {
+		return true;
+	}
+	$needle = function_exists( 'mb_strtolower' ) ? mb_strtolower( $name ) : strtolower( $name );
+	foreach ( $all as $ex ) {
+		if ( ! is_array( $ex ) ) {
+			continue;
+		}
+		$existing_name = trim( (string) ( $ex['name'] ?? '' ) );
+		$existing_norm = function_exists( 'mb_strtolower' ) ? mb_strtolower( $existing_name ) : strtolower( $existing_name );
+		if ( $existing_norm !== $needle || (int) ( $ex['serviceId'] ?? 0 ) !== $service_id ) {
+			continue;
+		}
+		$price_raw = isset( $ex['price'] ) && is_numeric( $ex['price'] ) ? (float) $ex['price'] : 0.0;
+		$price     = $price_raw === floor( $price_raw ) ? (string) (int) $price_raw : (string) $price_raw;
+		return new \WP_Error(
+			'duplicate_extra',
+			sprintf(
+				/* translators: 1: extra name 2: existing id 3: existing price */
+				__( 'Extra "%1$s" already exists for this service as id %2$d (price %3$s). Use that id instead of creating a duplicate.', 'harudigi-booking-abilities-for-amelia' ),
+				$existing_name,
+				(int) ( $ex['id'] ?? 0 ),
+				$price
+			)
+		);
+	}
+	return true;
 }
 
 /**

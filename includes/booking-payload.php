@@ -82,6 +82,243 @@ function normalize_booking_custom_fields( $raw ) {
 }
 
 /**
+ * Decode a booking customFields blob into a [{id,label,value}] list.
+ * Handles the JSON string Amelia stores and plain arrays.
+ *
+ * @param mixed $raw Booking customFields (JSON string or array).
+ * @return array<int, array{id:int,label:string,value:mixed}>
+ */
+function decode_booking_custom_fields( $raw ): array {
+	$cf = normalize_booking_custom_fields( $raw );
+	if ( ! is_array( $cf ) ) {
+		return array();
+	}
+	$out = array();
+	foreach ( $cf as $key => $value ) {
+		if ( is_array( $value ) && isset( $value['id'] ) ) {
+			$id = (int) $value['id'];
+		} elseif ( is_numeric( $key ) ) {
+			$id = (int) $key;
+		} else {
+			continue;
+		}
+		if ( $id <= 0 ) {
+			continue;
+		}
+		$out[] = array(
+			'id'    => $id,
+			'label' => is_array( $value ) ? (string) ( $value['label'] ?? '' ) : '',
+			'value' => is_array( $value ) ? ( $value['value'] ?? null ) : $value,
+		);
+	}
+	return $out;
+}
+
+/**
+ * Custom field values keyed by field id, for before/after compares.
+ *
+ * @param mixed $raw Booking customFields (stored shape or expanded input).
+ * @return array<int, mixed>
+ */
+function booking_custom_field_values_by_id( $raw ): array {
+	$out = array();
+	foreach ( decode_booking_custom_fields( $raw ) as $row ) {
+		$out[ $row['id'] ] = $row['value'];
+	}
+	ksort( $out );
+	return $out;
+}
+
+/**
+ * Resolve a custom field key (id or label) to a field id for a service.
+ * Exact label match first, then a unique partial label match.
+ *
+ * @param array<int, array<string,mixed>> $defs Field defs from list_custom_fields_for_entity().
+ * @return string|\WP_Error Field id as string.
+ */
+function resolve_booking_custom_field_key( string $key, array $defs ) {
+	$trimmed = trim( $key );
+	$available = array();
+	foreach ( $defs as $d ) {
+		if ( is_array( $d ) && ! empty( $d['id'] ) ) {
+			$available[] = sprintf( '%d "%s"', (int) $d['id'], (string) ( $d['label'] ?? '' ) );
+		}
+	}
+	$listing = $available ? implode( ', ', $available ) : __( 'none', 'harudigi-booking-abilities-for-amelia' );
+
+	if ( is_numeric( $trimmed ) ) {
+		$id = (string) (int) $trimmed;
+		if ( ! $defs ) {
+			return $id;
+		}
+		foreach ( $defs as $d ) {
+			if ( is_array( $d ) && (int) ( $d['id'] ?? 0 ) === (int) $id ) {
+				return $id;
+			}
+		}
+		return new \WP_Error(
+			'unknown_custom_field',
+			sprintf(
+				/* translators: 1: field key 2: available fields */
+				__( 'Unknown custom field id "%1$s". Available fields: %2$s.', 'harudigi-booking-abilities-for-amelia' ),
+				$trimmed,
+				$listing
+			)
+		);
+	}
+
+	$needle = strtolower( $trimmed );
+	$exact  = array();
+	$partial = array();
+	foreach ( $defs as $d ) {
+		if ( ! is_array( $d ) || empty( $d['id'] ) ) {
+			continue;
+		}
+		$label = strtolower( trim( (string) ( $d['label'] ?? '' ) ) );
+		if ( $label === $needle ) {
+			$exact[] = $d;
+		} elseif ( '' !== $needle && false !== strpos( $label, $needle ) ) {
+			$partial[] = $d;
+		}
+	}
+	$matches = $exact ? $exact : $partial;
+	if ( 1 === count( $matches ) ) {
+		return (string) (int) $matches[0]['id'];
+	}
+	if ( count( $matches ) > 1 ) {
+		return new \WP_Error(
+			'unknown_custom_field',
+			sprintf(
+				/* translators: 1: field key 2: available fields */
+				__( 'Ambiguous custom field label "%1$s". Available fields: %2$s. Use the exact label or the field id.', 'harudigi-booking-abilities-for-amelia' ),
+				$trimmed,
+				$listing
+			)
+		);
+	}
+	return new \WP_Error(
+		'unknown_custom_field',
+		sprintf(
+			/* translators: 1: field key 2: available fields */
+			__( 'Unknown custom field "%1$s". Available fields: %2$s. Use a field label or id from this list.', 'harudigi-booking-abilities-for-amelia' ),
+			$trimmed,
+			$listing
+		)
+	);
+}
+
+/**
+ * The three note areas plus decoded booking fields, by name.
+ *
+ * @param array<string,mixed> $appointment Appointment array from get-appointment.
+ * @return array<string,mixed>
+ */
+function appointment_notes_and_fields( array $appointment ): array {
+	$booking = null;
+	if ( ! empty( $appointment['bookings'][0] ) && is_array( $appointment['bookings'][0] ) ) {
+		$booking = $appointment['bookings'][0];
+	}
+	$fields = $booking ? decode_booking_custom_fields( $booking['customFields'] ?? null ) : array();
+	$shared = null;
+	foreach ( $fields as $row ) {
+		if ( 'notes' === strtolower( trim( $row['label'] ) ) ) {
+			$shared = $row['value'];
+			break;
+		}
+	}
+	$customer = ( $booking && ! empty( $booking['customer'] ) && is_array( $booking['customer'] ) ) ? $booking['customer'] : array();
+	return array(
+		'privateNote'  => $appointment['internalNotes'] ?? null,
+		'customerNote' => $customer['note'] ?? null,
+		'sharedNote'   => $shared,
+		'fields'       => $fields,
+	);
+}
+
+/** @param mixed $raw */
+function invalid_booking_start_error( $raw ): \WP_Error {
+	return new \WP_Error(
+		'invalid_booking_start',
+		sprintf(
+			/* translators: %s: received value */
+			__( 'Invalid bookingStart "%s". Accepted: "Y-m-d H:i" or "Y-m-d H:i:s" in site time, or ISO 8601 "Y-m-dTH:i" / "Y-m-dTH:i:s" with optional Z or offset like +09:00 (converted to site time). Example: 2026-12-20 10:00. Date only, slash or dot dates, month names, and relative words like tomorrow are not accepted.', 'harudigi-booking-abilities-for-amelia' ),
+			is_scalar( $raw ) ? (string) $raw : wp_json_encode( $raw )
+		)
+	);
+}
+
+function is_strict_ymd( string $s ): bool {
+	if ( ! preg_match( '/^(\d{4})-(\d{2})-(\d{2})$/', $s, $m ) ) {
+		return false;
+	}
+	return checkdate( (int) $m[2], (int) $m[3], (int) $m[1] );
+}
+
+/**
+ * Canonical booking time in site timezone, or WP_Error.
+ *
+ * @param mixed $raw Booking start input.
+ * @return string|\WP_Error Canonical Y-m-d H:i.
+ */
+function normalize_booking_start( $raw ) {
+	if ( ! is_string( $raw ) && ! is_numeric( $raw ) ) {
+		return invalid_booking_start_error( $raw );
+	}
+	$s = trim( (string) $raw );
+	if ( '' === $s ) {
+		return invalid_booking_start_error( $raw );
+	}
+	$tz = wp_timezone();
+
+	// ISO 8601: Y-m-dTH:i[:s][Z|±HH:MM]
+	if ( preg_match( '/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?(Z|[+-]\d{2}:\d{2})?$/', $s, $m ) ) {
+		$y = (int) $m[1]; $mo = (int) $m[2]; $d = (int) $m[3];
+		$h = (int) $m[4]; $mi = (int) $m[5]; $sec = isset( $m[6] ) && '' !== $m[6] ? (int) $m[6] : 0;
+		if ( ! checkdate( $mo, $d, $y ) || $h > 23 || $mi > 59 || $sec > 59 ) {
+			return invalid_booking_start_error( $raw );
+		}
+		$offset = $m[7] ?? '';
+		if ( '' !== $offset ) {
+			if ( ! preg_match( '/^(Z|[+-](\d{2}):(\d{2}))$/', $offset, $om ) || ( 'Z' !== $offset && ( (int) $om[2] > 14 || (int) $om[3] > 59 ) ) ) {
+				return invalid_booking_start_error( $raw );
+			}
+			$offset_norm = 'Z' === $offset ? '+00:00' : $offset;
+			$input_norm  = sprintf( '%04d-%02d-%02dT%02d:%02d:%02d%s', $y, $mo, $d, $h, $mi, $sec, $offset_norm );
+			$dt = \DateTimeImmutable::createFromFormat( 'Y-m-d\TH:i:sP', $input_norm );
+			$err = \DateTimeImmutable::getLastErrors();
+			if ( false === $dt || ( is_array( $err ) && ( $err['warning_count'] > 0 || $err['error_count'] > 0 ) ) ) {
+				return invalid_booking_start_error( $raw );
+			}
+			return $dt->setTimezone( $tz )->format( 'Y-m-d H:i' );
+		}
+		try {
+			$dt = new \DateTimeImmutable( sprintf( '%04d-%02d-%02d %02d:%02d:%02d', $y, $mo, $d, $h, $mi, $sec ), $tz );
+		} catch ( \Throwable $e ) {
+			return invalid_booking_start_error( $raw );
+		}
+		return $dt->format( 'Y-m-d H:i' );
+	}
+
+	// Plain site time: Y-m-d H:i[:s]
+	if ( preg_match( '/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})(?::(\d{2}))?$/', $s, $m ) ) {
+		$y = (int) $m[1]; $mo = (int) $m[2]; $d = (int) $m[3];
+		$h = (int) $m[4]; $mi = (int) $m[5]; $sec = isset( $m[6] ) && '' !== $m[6] ? (int) $m[6] : 0;
+		if ( ! checkdate( $mo, $d, $y ) || $h > 23 || $mi > 59 || $sec > 59 ) {
+			return invalid_booking_start_error( $raw );
+		}
+		$input_norm = sprintf( '%04d-%02d-%02d %02d:%02d:%02d', $y, $mo, $d, $h, $mi, $sec );
+		$dt = \DateTimeImmutable::createFromFormat( 'Y-m-d H:i:s', $input_norm, $tz );
+		$err = \DateTimeImmutable::getLastErrors();
+		if ( false === $dt || ( is_array( $err ) && ( $err['warning_count'] > 0 || $err['error_count'] > 0 ) ) ) {
+			return invalid_booking_start_error( $raw );
+		}
+		return $dt->format( 'Y-m-d H:i' );
+	}
+
+	return invalid_booking_start_error( $raw );
+}
+
+/**
  * Duration in seconds. Accepts seconds, or friendly strings like "1h", "90m", "2h".
  *
  * @param mixed $raw Duration input.
@@ -364,6 +601,14 @@ function get_service_booking_options( int $service_id ) {
 		}
 	}
 
+	$notes_field_id = null;
+	foreach ( $fields as $f ) {
+		if ( is_array( $f ) && 'notes' === strtolower( trim( (string) ( $f['label'] ?? '' ) ) ) ) {
+			$notes_field_id = (int) $f['id'];
+			break;
+		}
+	}
+
 	return array(
 		'service_id'             => $service_id,
 		'name'                   => (string) ( $service['name'] ?? '' ),
@@ -377,13 +622,66 @@ function get_service_booking_options( int $service_id ) {
 		'minSelectedExtras'      => $service['minSelectedExtras'] ?? null,
 		'mandatoryExtra'         => $service['mandatoryExtra'] ?? null,
 		'custom_fields'          => $fields,
+		'notes_map'              => array(
+			'privateNote'       => 'amelia/book internalNotes (staff only)',
+			'sharedNoteFieldId' => $notes_field_id,
+			'sharedNoteLabel'   => 'Notes',
+			'customerNote'      => 'amelia/mutate customer fields.note',
+		),
 		'how_to_book'            => array(
 			'duration'      => 'amelia/book action=create: pass duration as seconds or "1h"/"90m". For availability use amelia/query action=availability with serviceDuration.',
 			'extras'        => 'amelia/book: extras [{extraId, quantity}]. Availability: [{id, quantity}].',
-			'custom_fields' => 'Prefer simple map {"3":"text value","4":"WhatsApp"}. Full Amelia objects also accepted.',
+			'custom_fields' => 'Custom field keys can be field labels or ids, e.g. {"Notes":"..."} or {"3":"..."}. Labels match exactly, or by a unique partial match. Simple values and full Amelia objects both work. For select fields pass the option label, e.g. "WhatsApp".',
 			'update'        => 'amelia/book action=update id=N with extras/customFields/persons/status at top level (merges onto first booking).',
 			'status'        => 'Omit status → Amelia defaultAppointmentStatus. notify defaults false — ask human before true.',
 		),
+	);
+}
+
+/**
+ * Every requested extra must belong to the booking service.
+ *
+ * @param mixed $raw_extras Requested extras (booking shape).
+ * @return true|\WP_Error
+ */
+function validate_booking_extras_for_service( $raw_extras, int $service_id ) {
+	$requested = normalize_booking_extras( $raw_extras, 'extraId' );
+	if ( ! $requested || $service_id <= 0 ) {
+		return true;
+	}
+	$opts = get_service_booking_options( $service_id );
+	if ( is_wp_error( $opts ) ) {
+		return $opts;
+	}
+	$valid = array();
+	foreach ( (array) ( $opts['extras'] ?? array() ) as $ex ) {
+		if ( is_array( $ex ) && ! empty( $ex['id'] ) ) {
+			$valid[ (int) $ex['id'] ] = (string) ( $ex['name'] ?? '' );
+		}
+	}
+	$bad = array();
+	foreach ( $requested as $row ) {
+		$eid = (int) $row['extraId'];
+		if ( $eid > 0 && ! isset( $valid[ $eid ] ) ) {
+			$bad[ $eid ] = $eid;
+		}
+	}
+	if ( ! $bad ) {
+		return true;
+	}
+	$pairs = array();
+	foreach ( $valid as $vid => $vname ) {
+		$pairs[] = sprintf( '%d "%s"', $vid, $vname );
+	}
+	return new \WP_Error(
+		'extra_not_for_service',
+		sprintf(
+			/* translators: 1: bad extra ids 2: service id 3: valid extras */
+			__( 'Extra %1$s does not belong to service %2$d. Valid extras for this service: %3$s.', 'harudigi-booking-abilities-for-amelia' ),
+			implode( ', ', array_values( $bad ) ),
+			$service_id,
+			$pairs ? implode( ', ', $pairs ) : __( 'none', 'harudigi-booking-abilities-for-amelia' )
+		)
 	);
 }
 

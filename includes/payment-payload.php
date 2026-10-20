@@ -117,6 +117,30 @@ function normalize_payment_status( $raw ) {
 }
 
 /**
+ * Validate an amount supplied to pay add/update (or a booking payment fragment).
+ * Never coerce non-numeric input to 0. "half" is only valid for action=link.
+ *
+ * @param mixed $raw Amount input.
+ * @return float|\WP_Error
+ */
+function validate_payment_amount( $raw ) {
+	if ( is_bool( $raw ) || null === $raw || ( is_string( $raw ) && '' === trim( $raw ) ) || ! is_numeric( $raw ) ) {
+		return new \WP_Error(
+			'invalid_amount',
+			__( 'Invalid amount. Use a positive number, for example 1000. "half" is only accepted for pay action=link, not add/update.', 'harudigi-booking-abilities-for-amelia' )
+		);
+	}
+	$amount = (float) $raw;
+	if ( $amount <= 0 ) {
+		return new \WP_Error(
+			'invalid_amount',
+			__( 'Invalid amount. Use a positive number, for example 1000. Zero and negative amounts are not accepted for add/update.', 'harudigi-booking-abilities-for-amelia' )
+		);
+	}
+	return $amount;
+}
+
+/**
  * Payment fragment for create-appointment / book-event.
  *
  * @param array<string,mixed> $input Ability input.
@@ -140,7 +164,11 @@ function payment_from_booking_input( array $input ) {
 	);
 
 	if ( isset( $payment_in['amount'] ) || isset( $input['paymentAmount'] ) ) {
-		$out['amount'] = (float) ( $payment_in['amount'] ?? $input['paymentAmount'] );
+		$amount = validate_payment_amount( $payment_in['amount'] ?? $input['paymentAmount'] );
+		if ( is_wp_error( $amount ) ) {
+			return $amount;
+		}
+		$out['amount'] = $amount;
 	}
 	if ( isset( $payment_in['status'] ) || isset( $input['paymentStatus'] ) ) {
 		$status = normalize_payment_status( $payment_in['status'] ?? $input['paymentStatus'] );
@@ -213,7 +241,11 @@ function merge_payment_update( array $existing, array $patch ) {
 	}
 
 	if ( isset( $patch['amount'] ) || isset( $patch['paymentAmount'] ) ) {
-		$body['amount'] = (float) ( $patch['amount'] ?? $patch['paymentAmount'] );
+		$amount = validate_payment_amount( $patch['amount'] ?? $patch['paymentAmount'] );
+		if ( is_wp_error( $amount ) ) {
+			return $amount;
+		}
+		$body['amount'] = $amount;
 	}
 
 	if ( array_key_exists( 'transactionId', $patch ) ) {
@@ -283,10 +315,18 @@ function build_add_payment_body( array $input ) {
 		$entity = 'appointment';
 	}
 
+	$amount = 0.0;
+	if ( isset( $input['amount'] ) ) {
+		$amount = validate_payment_amount( $input['amount'] );
+		if ( is_wp_error( $amount ) ) {
+			return $amount;
+		}
+	}
+
 	$body = array(
 		'customerBookingId' => $booking_id > 0 ? $booking_id : null,
 		'packageCustomerId' => $package_id > 0 ? $package_id : null,
-		'amount'            => isset( $input['amount'] ) ? (float) $input['amount'] : 0.0,
+		'amount'            => $amount,
 		'dateTime'          => $date,
 		'status'            => $status,
 		'gateway'           => $gateway,
@@ -400,17 +440,25 @@ function payment_link_booking_total( $payment, array $data, $payment_as ) {
 /**
  * Resolve charge amount for a payment link.
  *
+ * "half" rule: when nothing has been paid yet, charge half of the total
+ * (half of the remaining balance). Once something has been paid, "half"
+ * means everything still owed, never half of the remaining half.
+ *
  * @param mixed $amount_arg null|number|"half" Requested charge.
  * @param float $remaining  Remaining balance.
+ * @param float $paid_so_far Amount already paid (paid rows only).
  * @return float|\WP_Error
  */
-function resolve_payment_link_amount( $amount_arg, float $remaining ) {
+function resolve_payment_link_amount( $amount_arg, float $remaining, float $paid_so_far = 0.0 ) {
 	if ( null === $amount_arg || '' === $amount_arg ) {
 		return $remaining;
 	}
 	if ( is_string( $amount_arg ) && 'half' === strtolower( trim( $amount_arg ) ) ) {
 		if ( $remaining <= 0 ) {
 			return new \WP_Error( 'payment_done', __( 'No balance due on this booking (already covered).', 'harudigi-booking-abilities-for-amelia' ) );
+		}
+		if ( $paid_so_far > 0.009 ) {
+			return $remaining;
 		}
 		return (float) round( $remaining / 2 );
 	}
@@ -518,7 +566,7 @@ function generate_payment_link( int $payment_id, string $gateway, $amount_arg = 
 	$paid_so_far  = payment_paid_so_far( is_array( $payment_rows ) ? $payment_rows : array() );
 	$remaining    = round( max( 0, $total - $paid_so_far ), 2 );
 
-	$charge = resolve_payment_link_amount( $amount_arg, $remaining );
+	$charge = resolve_payment_link_amount( $amount_arg, $remaining, $paid_so_far );
 	if ( is_wp_error( $charge ) ) {
 		return $charge;
 	}
@@ -665,6 +713,8 @@ function generate_payment_link( int $payment_id, string $gateway, $amount_arg = 
 			$gateway
 		);
 
+	$rule = __( 'Amount rule: "half" is half of the total when nothing has been paid yet. Once something has been paid, "half" is everything still owed. No amount means everything still owed.', 'harudigi-booking-abilities-for-amelia' );
+
 	return array(
 		'payment_id'       => $payment_id,
 		'gateway'          => $gateway,
@@ -674,6 +724,16 @@ function generate_payment_link( int $payment_id, string $gateway, $amount_arg = 
 		'paidSoFar'        => $paid_so_far,
 		'remainingBefore'  => $remaining,
 		'remainingAfter'   => $remaining_after,
+		'computedFrom'     => array(
+			'requested'    => $amount_arg,
+			'bookingTotal' => $total,
+			'paidSoFar'    => $paid_so_far,
+			'remaining'    => $remaining,
+			'chargedAmount'=> $charge,
+			'rule'         => $rule,
+		),
+		'rule'             => $rule,
+		'warning'          => __( 'A payment link is not a payment. Only paid payment rows count toward paidSoFar. The balance changes only after the client actually pays.', 'harudigi-booking-abilities-for-amelia' ),
 		'links'            => $payment_links,
 		'auto_approve'     => ! empty( $plink['changeBookingStatus'] ),
 		'gateway_enabled'  => $gw_enabled,

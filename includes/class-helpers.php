@@ -235,6 +235,73 @@ final class Helpers {
 		return $clean;
 	}
 
+	/** True when a string contains characters beyond the BMP (emoji and other 4-byte chars). @param mixed $value */
+	public static function contains_4byte_chars( $value ): bool {
+		return is_string( $value ) && '' !== $value && 1 === preg_match( '/[^\x{0000}-\x{FFFF}]/u', $value );
+	}
+
+	/**
+	 * Amelia text columns are utf8 (3-byte), so 4-byte chars get mangled to '????'.
+	 *
+	 * @param mixed $value
+	 * @return true|\WP_Error
+	 */
+	public static function assert_plain_text_field( string $field, $value ) {
+		if ( ! self::contains_4byte_chars( $value ) ) {
+			return true;
+		}
+		return new \WP_Error(
+			'invalid_characters',
+			sprintf(
+				/* translators: %s: field name */
+				__( 'Invalid characters in %s: emoji and other 4-byte characters are not supported in this field. Use plain text instead.', 'harudigi-booking-abilities-for-amelia' ),
+				$field
+			)
+		);
+	}
+
+	/**
+	 * Check named string fields for 4-byte chars.
+	 *
+	 * @param array<string, mixed> $fields Field name => value.
+	 * @return true|\WP_Error
+	 */
+	public static function assert_plain_text_fields( array $fields ) {
+		foreach ( $fields as $field => $value ) {
+			$check = self::assert_plain_text_field( (string) $field, $value );
+			if ( is_wp_error( $check ) ) {
+				return $check;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Check customFields string values (plain scalars or Amelia {value} shapes).
+	 *
+	 * @param mixed $raw Custom fields input.
+	 * @return true|\WP_Error
+	 */
+	public static function assert_plain_text_custom_fields( $raw ) {
+		if ( ! is_array( $raw ) ) {
+			return true;
+		}
+		foreach ( $raw as $key => $value ) {
+			if ( is_string( $value ) ) {
+				$check = self::assert_plain_text_field( 'customFields.' . $key, $value );
+				if ( is_wp_error( $check ) ) {
+					return $check;
+				}
+			} elseif ( is_array( $value ) && array_key_exists( 'value', $value ) ) {
+				$check = self::assert_plain_text_field( 'customFields.' . $key, $value['value'] );
+				if ( is_wp_error( $check ) ) {
+					return $check;
+				}
+			}
+		}
+		return true;
+	}
+
 	/** @return int|\WP_Error */
 	public static function parse_id( $id, string $label = 'id' ) {
 		if ( ! is_numeric( $id ) || (int) $id <= 0 ) {
@@ -353,6 +420,29 @@ final class Helpers {
 					? sanitize_text_field( $input[ $key ] )
 					: $input[ $key ];
 			}
+		}
+		// Amelia appointment lists filter by 'customers' (array of customer ids).
+		$customer_ids = array();
+		if ( ! empty( $params['customers'] ) ) {
+			foreach ( (array) $params['customers'] as $cid ) {
+				$customer_ids[] = (int) $cid;
+			}
+		}
+		if ( ! empty( $input['customerId'] ) ) {
+			$customer_ids[] = (int) $input['customerId'];
+		}
+		$customer_ids = array_values( array_unique( array_filter( $customer_ids ) ) );
+		if ( $customer_ids ) {
+			$params['customers'] = $customer_ids;
+		}
+		if ( ! empty( $input['serviceId'] ) || ! empty( $input['service_id'] ) ) {
+			$service_ids = ! empty( $params['services'] ) ? array_map( 'intval', (array) $params['services'] ) : array();
+			$service_ids[] = (int) ( $input['serviceId'] ?? $input['service_id'] );
+			$params['services'] = array_values( array_unique( array_filter( $service_ids ) ) );
+		}
+		if ( ! empty( $input['providerIds'] ) && is_array( $input['providerIds'] ) ) {
+			$provider_ids = ! empty( $params['providers'] ) ? array_map( 'intval', (array) $params['providers'] ) : array();
+			$params['providers'] = array_values( array_unique( array_filter( array_merge( $provider_ids, array_map( 'intval', $input['providerIds'] ) ) ) ) );
 		}
 		if ( ! empty( $input['date_from'] ) || ! empty( $input['date_to'] ) ) {
 			$params['dates'] = array(
