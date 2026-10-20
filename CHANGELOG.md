@@ -6,6 +6,14 @@ All notable changes to **HaruDigi Booking Abilities for Amelia and Easy MCP AI**
 
 Format: [Keep a Changelog](https://keepachangelog.com/) · versions match plugin `Version` / git tags `vX.Y.Z`.
 
+## [2.2.1] - 2026-10-20
+
+### Fixed
+- `amelia/help` now states the manual send rule plainly: `amelia/book action=notify` sends the customer template for the booking current status only, never changes the status, and must not be refused just because templates for other statuses are disabled.
+
+### Upgrade notice
+No behaviour change. Help text only, safe drop-in on top of 2.2.0.
+
 ## [2.2.0] - 2026-10-20
 
 ### Added

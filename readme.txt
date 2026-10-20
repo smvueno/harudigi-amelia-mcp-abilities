@@ -4,7 +4,7 @@ Tags: amelia, booking, mcp, ai, abilities
 Requires at least: 6.9
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.2.0
+Stable tag: 2.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -83,6 +83,9 @@ Leave `notify` / `notifyParticipants` unset or false (the default). Only set tru
 `amelia/pay` with `action=link` returns a checkout URL for the appointment’s remaining balance. Card checkout in a browser is out of scope for MCP.
 
 == Changelog ==
+
+= 2.2.1 =
+* Fixed: `amelia/help` now states the manual send rule plainly: `amelia/book action=notify` sends the customer template for the booking current status only, never changes the status, and must not be refused just because templates for other statuses are disabled.
 
 = 2.2.0 =
 * Added: Booking card in `amelia/book` create `dry_run` preview: service, provider, customer, time, extras by name, estimated total, status, email to client yes or no, and notes by label. Update previews get the same short summary.
@@ -181,10 +184,10 @@ Leave `notify` / `notifyParticipants` unset or false (the default). Only set tru
 = 1.7.3 =
 * Fixed: Plugin Check cleanups
 
-= 1.7.2 =
-* Fixed: Appointment extras dropped on update
-
 == Upgrade Notice ==
+
+= 2.2.1 =
+No behaviour change. Help text only, safe drop-in on top of 2.2.0.
 
 = 2.2.0 =
 Payment `amount: "half"` after a partial payment now charges the full remaining balance. Agents should rely on the returned `rule` and `paidSoFar`.
@@ -227,6 +230,3 @@ Fixed: Cache Amelia status counts; Plugin Check cleanups under install slug
 
 = 1.7.3 =
 Fixed: Plugin Check cleanups
-
-= 1.7.2 =
-Fixed: Appointment extras dropped on update
